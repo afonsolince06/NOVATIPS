@@ -79,11 +79,11 @@ export default function LoginModal({ onClose }) {
             </div>
             
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-              Código de 6 Dígitos
+              Código de Acesso
             </label>
             <input
-              type="text" value={code} onChange={e => setCode(e.target.value)}
-              placeholder="Ex: 123456" required maxLength={6}
+              type="text" value={code} onChange={e => setCode(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="Ex: 123456" required maxLength={10}
               style={{
                 width: '100%', background: '#ffffff', textAlign: 'center', letterSpacing: 4,
                 border: '1px solid #cbd5e1', borderRadius: 12,
@@ -104,14 +104,14 @@ export default function LoginModal({ onClose }) {
             )}
             
             <button
-              type="submit" disabled={loading || code.length < 6}
+              type="submit" disabled={loading || code.length < 5}
               style={{
                 width: '100%',
-                background: (loading || code.length < 6) ? '#e2e8f0' : '#10b981',
-                color: (loading || code.length < 6) ? '#94a3b8' : '#ffffff', fontWeight: 700, fontSize: 15,
+                background: (loading || code.length < 5) ? '#e2e8f0' : '#10b981',
+                color: (loading || code.length < 5) ? '#94a3b8' : '#ffffff', fontWeight: 700, fontSize: 15,
                 border: 'none', borderRadius: 12, padding: '14px',
-                cursor: (loading || code.length < 6) ? 'not-allowed' : 'pointer',
-                boxShadow: (loading || code.length < 6) ? 'none' : '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
+                cursor: (loading || code.length < 5) ? 'not-allowed' : 'pointer',
+                boxShadow: (loading || code.length < 5) ? 'none' : '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
                 transition: 'all 0.2s'
               }}
             >{loading ? 'A verificar...' : 'Entrar na Plataforma 🚀'}</button>
