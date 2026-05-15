@@ -209,19 +209,22 @@ function AppContent() {
       {activeTab === 'bets' && (
         <>
           {/* Hero */}
-          <div style={{ padding: '40px 32px 30px', position: 'relative', overflow: 'hidden', background: '#ffffff', borderBottom: '1px solid #e5e7eb', marginBottom: 24 }}>
-            <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#ef4444', fontWeight: 700 }}>
+          <div style={{ 
+            padding: '60px 32px 50px', position: 'relative', overflow: 'hidden', 
+            backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%), url("/logo.jpg.jpeg")',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            borderBottom: '1px solid #e5e7eb', marginBottom: 24 
+          }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#fca5a5', fontWeight: 700, backdropFilter: 'blur(4px)' }}>
                 ⚠️ FOR ENTERTAINMENT ONLY
               </div>
-              
-              <img src="/logo.jpg.jpeg" alt="NOVA TIPS" style={{ width: 80, height: 80, borderRadius: 16, marginBottom: 16, objectFit: 'cover' }} onError={(e) => e.target.style.display = 'none'} />
 
-              <h1 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#1a1a1a' }}>
+              <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#ffffff' }}>
                 IMS BEST TIPS.<br/>
-                <span style={{ color: '#1e90ff' }}>Dicas que marcam.</span>
+                <span style={{ color: '#60a5fa' }}>Dicas que marcam.</span>
               </h1>
-              <p style={{ fontSize: 15, color: '#666', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
                 A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.
               </p>
               {!user && (
