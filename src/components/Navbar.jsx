@@ -4,8 +4,8 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
   const { user, signOut } = useAuth();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
 
-  const tabs = ['bets', 'history', ...(isAdmin ? ['admin'] : [])];
-  const tabLabels = { bets: 'Bets', history: 'My Bets', admin: '⚙️ Admin' };
+  const tabs = ['bets', 'leaderboard', 'history', ...(isAdmin ? ['admin'] : [])];
+  const tabLabels = { bets: 'Bets', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin' };
 
   return (
     <nav style={{

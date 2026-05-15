@@ -73,7 +73,7 @@ function AppContent() {
     if (!data) {
       // Create missing profile gracefully
       const { data: newProfile } = await supabase.from('profiles').insert([
-        { id: user.id, email: user.email, balance: 1000, last_claim_at: null }
+        { id: user.id, email: user.email, balance: 2500, last_claim_at: null }
       ]).select('balance, last_claim_at').single();
       data = newProfile;
     }
@@ -130,7 +130,7 @@ function AppContent() {
       return;
     }
     await loadProfile();
-    showToast('+10 TIPS claimed! 🎉');
+    showToast('+1000 TIPS claimed! 🎉');
   };
 
 
@@ -280,10 +280,8 @@ function AppContent() {
                   color: canClaim ? '#0369a1' : '#9ca3af', borderRadius: 8, padding: '12px 0',
                   fontSize: 14, fontWeight: 700, cursor: canClaim ? 'pointer' : 'default',
                   transition: 'all 0.2s'
-                }}>{canClaim ? '🎁 Claim weekly +10 TIPS' : '✓ Claimed this week'}</button>
+                }}>{canClaim ? '🎁 Claim weekly +1000 TIPS' : '✓ Claimed this week'}</button>
               </div>
-
-              <Leaderboard />
               
               {/* Disclaimer */}
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px' }}>
@@ -294,6 +292,14 @@ function AppContent() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── LEADERBOARD TAB ── */}
+      {activeTab === 'leaderboard' && (
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 24, margin: '0 0 24px', letterSpacing: -0.5, color: '#1a1a1a' }}>Global Leaderboard 🏆</h2>
+          <Leaderboard />
+        </div>
       )}
 
       {/* ── MY BETS TAB ── */}
