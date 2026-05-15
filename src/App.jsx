@@ -222,13 +222,13 @@ function AppContent() {
 
               <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#ffffff' }}>
                 IMS BEST TIPS.<br/>
-                <span style={{ color: '#60a5fa' }}>Dicas que marcam.</span>
+                <span style={{ color: '#a3e635' }}>Dicas que marcam.</span>
               </h1>
               <p style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
                 A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.
               </p>
               {!user && (
-                <button onClick={() => setShowLogin(true)} style={{ background: '#1e90ff', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 4px 6px -1px rgba(30, 144, 255, 0.2)' }}>
+                <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.2)' }}>
                   Entrar com @novaims 🎓
                 </button>
               )}
@@ -242,8 +242,8 @@ function AppContent() {
               <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 {['All', 'Hot', 'Closing'].map(f => (
                   <button key={f} onClick={() => setFilter(f)} style={{
-                    background: filter === f ? '#1e90ff' : '#ffffff',
-                    border: filter === f ? '1px solid #1e90ff' : '1px solid #e5e7eb',
+                    background: filter === f ? '#84cc16' : '#ffffff',
+                    border: filter === f ? '1px solid #84cc16' : '1px solid #e5e7eb',
                     color: filter === f ? '#fff' : '#666',
                     borderRadius: 20, padding: '8px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -269,7 +269,7 @@ function AppContent() {
               <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <div style={{ fontSize: 12, color: '#666', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>A tua Carteira</div>
                 <div style={{ fontSize: 32, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: '#1a1a1a', letterSpacing: -1, marginBottom: 4 }}>
-                  <span style={{ color: '#1e90ff' }}>TIPS</span> {user ? balance.toLocaleString() : '—'}
+                  <span style={{ color: '#84cc16' }}>TIPS</span> {user ? balance.toLocaleString() : '—'}
                 </div>
                 <div style={{ fontSize: 13, color: '#666', marginBottom: 20 }}>Saldo disponível</div>
                 
@@ -310,7 +310,7 @@ function AppContent() {
             <div style={{ textAlign: 'center', padding: '60px 0', background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb' }}>
               <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
               <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1a1a1a' }}>Login to see your bets</div>
-              <button onClick={() => setShowLogin(true)} style={{ background: '#1e90ff', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', borderRadius: 8, padding: '12px 24px', cursor: 'pointer' }}>Login 🎓</button>
+              <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', borderRadius: 8, padding: '12px 24px', cursor: 'pointer' }}>Login 🎓</button>
             </div>
           ) : <MyBets myBets={myBets} />}
         </div>

@@ -20,12 +20,12 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
         <img 
           src="/logo.jpg.jpeg" 
           alt="N" 
-          style={{ width: 34, height: 34, borderRadius: 9, objectFit: 'cover', background: '#1e90ff' }} 
+          style={{ width: 34, height: 34, borderRadius: 9, objectFit: 'cover', background: '#84cc16' }} 
         />
         <div>
           <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: -0.5, fontFamily: "'Space Grotesk', sans-serif", color: '#1a1a1a' }}>
             NOVA{' '}
-            <span style={{ color: '#1e90ff' }}>
+            <span style={{ color: '#84cc16' }}>
               TIPS
             </span>
           </div>
@@ -42,9 +42,9 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              background: activeTab === tab ? '#eff6ff' : 'transparent',
+              background: activeTab === tab ? '#ecfccb' : 'transparent',
               border: 'none',
-              color: activeTab === tab ? '#1e90ff' : '#64748b',
+              color: activeTab === tab ? '#65a30d' : '#64748b',
               borderRadius: 8, padding: '8px 16px', fontSize: 14, fontWeight: 700,
               cursor: 'pointer', transition: 'all 0.15s',
             }}
@@ -70,7 +70,7 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34, height: 34, borderRadius: '50%',
-              background: '#e0f0ff', color: '#1e90ff',
+              background: '#ecfccb', color: '#65a30d',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 800, fontSize: 14,
             }}>{initial}</div>
@@ -87,10 +87,10 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
           <button
             onClick={onLoginClick}
             style={{
-              background: '#1e90ff',
+              background: '#84cc16',
               color: '#fff', fontWeight: 700, fontSize: 13, border: 'none',
               borderRadius: 8, padding: '10px 20px', cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(30, 144, 255, 0.2)'
+              boxShadow: '0 2px 4px rgba(132, 204, 22, 0.2)'
             }}
           >Login 🎓</button>
         )}
