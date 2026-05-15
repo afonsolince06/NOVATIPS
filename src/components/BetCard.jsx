@@ -3,19 +3,45 @@ export default function BetCard({ bet, onOptionClick }) {
   
   // Calculate automatic expiry based on hours in the label
   let isExpired = false;
+  let remainingText = closesLabel;
+  let isClosingSoon = false;
+
   if (bet.created_at) {
     const hoursMatch = closesLabel.match(/(\d+)/);
     if (hoursMatch) {
       const hours = parseInt(hoursMatch[1], 10);
+      
+      // If it's labeled in days (e.g. "7d"), convert to hours for calculation
+      const multiplier = closesLabel.toLowerCase().includes('d') ? 24 : 1;
+      const totalHours = hours * multiplier;
+      
       const createdAtTime = new Date(bet.created_at).getTime();
-      const expiresAt = createdAtTime + (hours * 60 * 60 * 1000);
-      if (Date.now() > expiresAt) {
+      const expiresAt = createdAtTime + (totalHours * 60 * 60 * 1000);
+      const now = Date.now();
+
+      if (now > expiresAt) {
         isExpired = true;
+      } else {
+        const diffMs = expiresAt - now;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (diffHours >= 24) {
+          const diffDays = Math.floor(diffHours / 24);
+          remainingText = `${diffDays}d ${diffHours % 24}h`;
+        } else if (diffHours > 0) {
+          remainingText = `${diffHours}h ${diffMinutes}m`;
+          if (diffHours <= 3) isClosingSoon = true;
+        } else {
+          remainingText = `${diffMinutes}m`;
+          isClosingSoon = true;
+        }
       }
     }
+  } else {
+    // Fallback if no created_at
+    isClosingSoon = !isExpired && closesLabel.includes('m') && !closesLabel.includes('d');
   }
-
-  const isClosingSoon = !isExpired && closesLabel.includes('m') && !closesLabel.includes('d');
 
   // Safe parse: handle both proper JSONB array and accidental string (legacy bug)
   let opts = [];
@@ -26,7 +52,7 @@ export default function BetCard({ bet, onOptionClick }) {
   return (
     <div style={{
       background: '#ffffff',
-      border: bet.featured ? '1px solid #1e90ff' : '1px solid #e5e7eb',
+      border: bet.featured ? '1px solid #84cc16' : '1px solid #e5e7eb',
       borderRadius: 12, padding: '16px', position: 'relative', overflow: 'hidden',
       boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
       transition: 'box-shadow 0.2s',
@@ -36,7 +62,7 @@ export default function BetCard({ bet, onOptionClick }) {
     onMouseLeave={e => !isExpired && (e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)')}
     >
       {bet.featured && !isExpired && (
-        <div style={{ position: 'absolute', top: 0, right: 0, background: '#1e90ff', color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: '0 12px 0 8px', letterSpacing: 0.5 }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, background: '#84cc16', color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: '0 12px 0 8px', letterSpacing: 0.5 }}>
           ★ FEATURED
         </div>
       )}
@@ -57,12 +83,12 @@ export default function BetCard({ bet, onOptionClick }) {
               )}
               {isClosingSoon && (
                 <span style={{ fontSize: 10, fontWeight: 700, background: '#fffbeb', border: '1px solid #fde68a', color: '#d97706', borderRadius: 4, padding: '2px 6px' }}>
-                  ⏰ CLOSING {closesLabel}
+                  ⏰ CLOSING {remainingText}
                 </span>
               )}
               {!isClosingSoon && (
                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
-                   Closes in {closesLabel}
+                   Faltam {remainingText}
                  </span>
               )}
             </>
@@ -79,36 +105,40 @@ export default function BetCard({ bet, onOptionClick }) {
 
       {/* Odds buttons */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {opts.map((opt, i) => (
-          <button
-            key={i}
-            disabled={isExpired}
-            onClick={() => !isExpired && onOptionClick(bet, opt)}
-            style={{
-              flex: 1, minWidth: 80, background: isExpired ? '#f8fafc' : '#ffffff',
-              border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 8px',
-              cursor: isExpired ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-            }}
-            onMouseEnter={e => { 
-              if (isExpired) return;
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.borderColor = '#1e90ff';
-              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(30, 144, 255, 0.1)';
-            }}
-            onMouseLeave={e => { 
-              if (isExpired) return;
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.borderColor = '#e2e8f0';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : '#475569', fontWeight: 600 }}>{opt.label}</span>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : '#00c853' }}>
-              {opt.odds.toFixed(2)}
-            </span>
-          </button>
-        ))}
+        {opts.map((opt, i) => {
+          const isNo = opt.label.toLowerCase().trim() === 'não' || opt.label.toLowerCase().trim() === 'nao';
+          
+          return (
+            <button
+              key={i}
+              disabled={isExpired}
+              onClick={() => !isExpired && onOptionClick(bet, opt)}
+              style={{
+                flex: 1, minWidth: 80, background: isExpired ? '#f8fafc' : '#ffffff',
+                border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 8px',
+                cursor: isExpired ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              }}
+              onMouseEnter={e => { 
+                if (isExpired) return;
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.borderColor = isNo ? '#ef4444' : '#84cc16';
+                e.currentTarget.style.boxShadow = isNo ? '0 4px 6px -1px rgba(239, 68, 68, 0.1)' : '0 4px 6px -1px rgba(132, 204, 22, 0.1)';
+              }}
+              onMouseLeave={e => { 
+                if (isExpired) return;
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isNo ? '#ef4444' : '#475569'), fontWeight: 600 }}>{opt.label}</span>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isNo ? '#ef4444' : '#00c853') }}>
+                {opt.odds.toFixed(2)}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
