@@ -35,7 +35,19 @@ export function AuthProvider({ children }) {
 
     if (error) {
       console.error('Supabase login error:', error);
-      throw new Error(error.message || 'Error sending magic link email');
+      throw new Error(error.message || 'Error sending login code');
+    }
+  };
+
+  const verifyCode = async (email, token) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    });
+    
+    if (error) {
+      throw new Error('Código incorreto ou expirado. Tenta de novo.');
     }
   };
 
@@ -45,7 +57,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, verifyCode, signOut }}>
       {!loading && children}
     </AuthContext.Provider>
   );
