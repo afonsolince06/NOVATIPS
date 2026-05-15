@@ -17,12 +17,11 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
     }}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: 9,
-          background: '#1e90ff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 900, fontSize: 16, color: '#fff',
-        }}>N</div>
+        <img 
+          src="/logo.jpg.jpeg" 
+          alt="N" 
+          style={{ width: 34, height: 34, borderRadius: 9, objectFit: 'cover', background: '#1e90ff' }} 
+        />
         <div>
           <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: -0.5, fontFamily: "'Space Grotesk', sans-serif", color: '#1a1a1a' }}>
             NOVA{' '}

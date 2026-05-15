@@ -205,15 +205,6 @@ function AppContent() {
       <Navbar onLoginClick={() => setShowLogin(true)} balance={balance}
         activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
 
-      {/* Live ticker */}
-      <div style={{
-        background: '#ffffff', borderBottom: '1px solid #e5e7eb',
-        padding: '8px 28px', display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden',
-      }}>
-        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: '#1e90ff', background: '#e0f0ff', padding: '3px 8px', borderRadius: 4, whiteSpace: 'nowrap' }}>● LIVE</span>
-        <span style={{ fontSize: 13, color: '#666', whiteSpace: 'nowrap', fontWeight: 500 }}>{TICKER[tickerIdx]}</span>
-      </div>
-
       {/* ── BETS TAB ── */}
       {activeTab === 'bets' && (
         <>
@@ -223,12 +214,15 @@ function AppContent() {
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#ef4444', fontWeight: 700 }}>
                 ⚠️ FOR ENTERTAINMENT ONLY
               </div>
+              
+              <img src="/logo.jpg.jpeg" alt="NOVA TIPS" style={{ width: 80, height: 80, borderRadius: 16, marginBottom: 16, objectFit: 'cover' }} onError={(e) => e.target.style.display = 'none'} />
+
               <h1 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#1a1a1a' }}>
-                Sports Predictions.<br/>
-                <span style={{ color: '#1e90ff' }}>Zero Real Money.</span>
+                IMS BEST TIPS.<br/>
+                <span style={{ color: '#1e90ff' }}>Dicas que marcam.</span>
               </h1>
               <p style={{ fontSize: 15, color: '#666', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.5 }}>
-                A plataforma oficial de previsões da NOVA IMS. Virtual, grátis e 100% académica.
+                A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.
               </p>
               {!user && (
                 <button onClick={() => setShowLogin(true)} style={{ background: '#1e90ff', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 4px 6px -1px rgba(30, 144, 255, 0.2)' }}>
