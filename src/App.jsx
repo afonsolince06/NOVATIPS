@@ -46,6 +46,34 @@ function AppContent() {
     return () => clearInterval(t);
   }, []);
 
+  // Detect referral code in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('referralCode', ref);
+      // Clean URL without reloading page
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, []);
+
+  // Process referral code once user is logged in
+  useEffect(() => {
+    if (user) {
+      const ref = localStorage.getItem('referralCode');
+      if (ref && ref !== user.id) {
+        supabase.rpc('process_referral', { p_referrer_id: ref })
+          .then(({ error }) => {
+            if (!error) {
+               showToast('Código de amigo ativado! Ganhaste +500 TIPS 🎁');
+               loadProfile(); // update balance
+            }
+            localStorage.removeItem('referralCode'); // only try once
+          });
+      }
+    }
+  }, [user]);
+
   // Load bets on mount
   useEffect(() => { loadBets(); }, []);
 

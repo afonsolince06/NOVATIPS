@@ -6,7 +6,7 @@ export default function ProfileModal({ user, balance, onClose, onSignOut }) {
   const [showPromoInput, setShowPromoInput] = useState(false);
 
   const handleInvite = () => {
-    navigator.clipboard.writeText('https://novatips.vercel.app/invite?ref=' + user.id);
+    navigator.clipboard.writeText('https://novatips.vercel.app/?ref=' + user.id);
     alert('Link de convite copiado! Ganhas 500 TIPS por cada amigo que se registar.');
   };
 
@@ -65,17 +65,6 @@ export default function ProfileModal({ user, balance, onClose, onSignOut }) {
           <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: 42, color: '#1a1a1a', letterSpacing: -1 }}>
             {balance.toLocaleString()} <span style={{ fontSize: 20, color: '#84cc16' }}>TIPS</span>
           </span>
-          
-          <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 24 }}>
-            <button style={{
-              flex: 1, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 12,
-              padding: '16px', fontSize: 15, fontWeight: 800, cursor: 'pointer'
-            }}>Levantar</button>
-            <button style={{
-              flex: 1, background: '#84cc16', color: '#fff', border: 'none', borderRadius: 12,
-              padding: '16px', fontSize: 15, fontWeight: 800, cursor: 'pointer'
-            }}>Depositar</button>
-          </div>
         </div>
       </div>
 
@@ -84,18 +73,6 @@ export default function ProfileModal({ user, balance, onClose, onSignOut }) {
         <h4 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 16px 8px', color: '#1a1a1a' }}>Agora</h4>
         
         <div style={{ background: '#ffffff', borderRadius: 20, padding: '8px 0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-          {/* Novidades */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 20 }}>📢</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>Novidades</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ background: '#1a1a1a', color: '#fff', padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>2</div>
-              <span style={{ color: '#cbd5e1' }}>›</span>
-            </div>
-          </div>
-
           {/* Código Promocional */}
           <div 
             onClick={() => setShowPromoInput(!showPromoInput)}
