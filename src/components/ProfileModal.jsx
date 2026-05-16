@@ -6,6 +6,9 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
   const [promoCode, setPromoCode] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
   
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [tempUsername, setTempUsername] = useState(username || '');
 
@@ -17,6 +20,21 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
       setIsEditingUsername(false);
     } else {
       alert('Erro ao guardar username: ' + error.message);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 6) {
+      alert('A password deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      alert('Erro ao mudar password: ' + error.message);
+    } else {
+      alert('Password atualizada com sucesso! 🔐');
+      setNewPassword('');
+      setShowPasswordInput(false);
     }
   };
 
@@ -132,6 +150,36 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
                 style={{ background: '#1e90ff', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Aplicar
+              </button>
+            </div>
+          )}
+
+          {/* Mudar Password */}
+          <div 
+            onClick={() => setShowPasswordInput(!showPasswordInput)}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 20 }}>🔑</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>Mudar Password</span>
+            </div>
+            <span style={{ color: '#cbd5e1' }}>›</span>
+          </div>
+
+          {showPasswordInput && (
+            <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8 }}>
+              <input 
+                type="password" 
+                placeholder="Nova password" 
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontWeight: 600 }}
+              />
+              <button 
+                onClick={handlePasswordChange}
+                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Guardar
               </button>
             </div>
           )}
