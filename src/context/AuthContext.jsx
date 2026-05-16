@@ -21,33 +21,28 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email) => {
+  const signInWithPassword = async (email, password) => {
     if (!email.endsWith('@novaims.unl.pt')) {
       throw new Error('Use your NOVA IMS institutional email.');
     }
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
-    });
-
-    if (error) {
-      console.error('Supabase login error:', error);
-      throw new Error(error.message || 'Error sending login code');
-    }
-  };
-
-  const verifyCode = async (email, token) => {
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
+    // Attempt to sign in
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
-      throw new Error('Código incorreto ou expirado. Tenta de novo.');
+      // If invalid credentials, we can't be sure if user doesn't exist or wrong password
+      // Let's attempt to sign up
+      if (error.message.includes('Invalid login') || error.message.includes('credentials')) {
+        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            throw new Error('Password errada! Tenta novamente.');
+          }
+          throw new Error(signUpError.message);
+        }
+        return; // successfully signed up and logged in
+      }
+      throw new Error(error.message);
     }
   };
 
@@ -57,7 +52,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, verifyCode, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithPassword, signOut }}>
       {!loading && children}
     </AuthContext.Provider>
   );
