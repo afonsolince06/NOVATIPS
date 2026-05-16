@@ -43,7 +43,7 @@ export default function BetSlipModal({ betSlip, balance, onConfirm, onClose, onR
           <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 20, margin: 0, color: '#1a1a1a' }}>
             Boletim de Apostas
           </h3>
-          <span style={{ background: isMultiple ? '#1e90ff' : '#84cc16', color: isMultiple ? '#fff' : '#1a1a1a', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
+          <span style={{ background: isMultiple ? '#84cc16' : '#84cc16', color: isMultiple ? '#fff' : '#1a1a1a', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
             {isMultiple ? `Múltiplas (${betSlip.length})` : 'Simples'}
           </span>
         </div>
