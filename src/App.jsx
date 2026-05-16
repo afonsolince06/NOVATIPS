@@ -38,6 +38,7 @@ function AppContent() {
   const [myBets, setMyBets] = useState([]);
   const [toast, setToast] = useState(null);
   const [balance, setBalance] = useState(0);
+  const [username, setUsername] = useState(null);
   const [lastClaim, setLastClaim] = useState(null);
   const [tickerIdx, setTickerIdx] = useState(0);
 
@@ -99,17 +100,17 @@ function AppContent() {
 
   const loadProfile = async () => {
     let { data } = await supabase
-      .from('profiles').select('balance, last_claim_at').eq('id', user.id).maybeSingle();
+      .from('profiles').select('balance, last_claim_at, username').eq('id', user.id).maybeSingle();
 
     if (!data) {
       // Create missing profile gracefully
       const { data: newProfile } = await supabase.from('profiles').insert([
         { id: user.id, email: user.email, balance: 2500, last_claim_at: null }
-      ]).select('balance, last_claim_at').single();
+      ]).select('balance, last_claim_at, username').single();
       data = newProfile;
     }
 
-    if (data) { setBalance(data.balance); setLastClaim(data.last_claim_at); }
+    if (data) { setBalance(data.balance); setLastClaim(data.last_claim_at); setUsername(data.username); }
   };
 
   const loadMyBets = async () => {
@@ -277,6 +278,8 @@ function AppContent() {
         <ProfileModal 
           user={user}
           balance={balance}
+          username={username}
+          setUsername={setUsername}
           onClose={() => setIsProfileOpen(false)}
           onSignOut={async () => { await supabase.auth.signOut(); setIsProfileOpen(false); }}
         />

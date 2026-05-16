@@ -10,15 +10,15 @@ export default function Leaderboard() {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('email, balance')
+      .select('email, balance, username')
       .order('balance', { ascending: false })
-      .limit(5)
+      .limit(20)
       .then(({ data }) => {
         if (data) setEntries(data.map((u, i) => ({
           rank: i + 1,
-          name: u.email?.split('@')[0] ?? 'anon',
+          name: u.username || u.email?.split('@')[0] || 'anon',
           tips: u.balance,
-          avatar: (u.email?.[0] ?? '?').toUpperCase(),
+          avatar: ((u.username || u.email)?.[0] || '?').toUpperCase(),
         })));
       });
   }, []);

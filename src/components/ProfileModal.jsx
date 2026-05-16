@@ -1,9 +1,24 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
-export default function ProfileModal({ user, balance, onClose, onSignOut }) {
-  const initial = user?.email?.[0]?.toUpperCase() ?? '?';
+export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut }) {
+  const initial = (username || user?.email)?.[0]?.toUpperCase() ?? '?';
   const [promoCode, setPromoCode] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
+  
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [tempUsername, setTempUsername] = useState(username || '');
+
+  const handleSaveUsername = async () => {
+    if (!tempUsername.trim()) return;
+    const { error } = await supabase.from('profiles').update({ username: tempUsername.trim() }).eq('id', user.id);
+    if (!error) {
+      setUsername(tempUsername.trim());
+      setIsEditingUsername(false);
+    } else {
+      alert('Erro ao guardar username: ' + error.message);
+    }
+  };
 
   const handleInvite = () => {
     navigator.clipboard.writeText('https://novatips.vercel.app/?ref=' + user.id);
@@ -47,11 +62,28 @@ export default function ProfileModal({ user, balance, onClose, onSignOut }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#fff', fontSize: 48, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif",
           boxShadow: '0 10px 25px rgba(22, 163, 74, 0.3)',
-          marginBottom: 24
+          marginBottom: 16
         }}>
           {initial}
         </div>
-        <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, marginBottom: 30 }}>{user.email}</div>
+        
+        {isEditingUsername ? (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 30 }}>
+            <input 
+              type="text" value={tempUsername} onChange={e => setTempUsername(e.target.value)}
+              placeholder="Novo username"
+              style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontWeight: 600 }}
+              autoFocus
+            />
+            <button onClick={handleSaveUsername} style={{ background: '#1e90ff', color: '#fff', border: 'none', borderRadius: 8, padding: '0 12px', cursor: 'pointer', fontWeight: 700 }}>Salvar</button>
+            <button onClick={() => setIsEditingUsername(false)} style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, padding: '0 12px', cursor: 'pointer', fontWeight: 700 }}>X</button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 30 }}>
+            <span style={{ fontSize: 18, color: '#1a1a1a', fontWeight: 800 }}>{username || user.email.split('@')[0]}</span>
+            <button onClick={() => { setTempUsername(username || ''); setIsEditingUsername(true); }} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✏️</button>
+          </div>
+        )}
       </div>
 
       {/* Balance Card */}

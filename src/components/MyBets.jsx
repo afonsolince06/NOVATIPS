@@ -42,6 +42,26 @@ export default function MyBets({ myBets }) {
                 {' · '}
                 <span style={{ color: '#94a3b8' }}>{new Date(b.placed_at || b.placedAt).toLocaleDateString()}</span>
               </div>
+              {b.is_multiple && b.legs && (
+                <details style={{ marginTop: 12 }}>
+                  <summary style={{ cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 700, outline: 'none' }}>
+                    Ver apostas ({b.legs.length})
+                  </summary>
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {b.legs.map((leg, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#f8fafc', padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#334155' }}>{leg.bet_title}</span>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ fontWeight: 700, color: '#1e90ff' }}>{leg.option_label}</span>
+                          <span style={{ background: leg.status === 'Won' ? '#dcfce7' : leg.status === 'Lost' ? '#fee2e2' : '#fef3c7', color: leg.status === 'Won' ? '#16a34a' : leg.status === 'Lost' ? '#dc2626' : '#d97706', padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 800 }}>
+                            {leg.status || 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
