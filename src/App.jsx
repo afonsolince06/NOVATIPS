@@ -9,6 +9,7 @@ import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
 import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
+import BetSlipModal from './components/BetSlipModal';
 import Toast from './components/Toast';
 import Footer from './components/Footer';
 
@@ -29,8 +30,8 @@ function AppContent() {
   const [bets, setBets] = useState([]);
   const [filter, setFilter] = useState('All');
   const [activeTab, setActiveTab] = useState('bets');
-  const [selectedBet, setSelectedBet] = useState(null);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [betSlip, setBetSlip] = useState([]);
+  const [isBetSlipOpen, setIsBetSlipOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [myBets, setMyBets] = useState([]);
   const [toast, setToast] = useState(null);
@@ -96,30 +97,65 @@ function AppContent() {
 
   const handleOptionClick = (bet, option) => {
     if (!user) { setShowLogin(true); return; }
-    setSelectedBet(bet);
-    setSelectedOption(option);
+    
+    const existingIndex = betSlip.findIndex(item => item.bet.id === bet.id);
+    
+    if (existingIndex !== -1) {
+      if (betSlip[existingIndex].option.label === option.label) {
+         setBetSlip(prev => prev.filter((_, i) => i !== existingIndex)); // remove
+      } else {
+         setBetSlip(prev => { // replace option
+            const newSlip = [...prev];
+            newSlip[existingIndex] = { bet, option };
+            return newSlip;
+         });
+      }
+    } else {
+      setBetSlip(prev => [...prev, { bet, option }]); // add
+    }
   };
 
-  const handlePlaceBet = async (amount) => {
-    // If bet has integer ID it's from INITIAL_BETS fallback — no Supabase yet
-    if (typeof selectedBet.id === 'number') {
-      showToast('Supabase not set up yet — bet placement unavailable.', 'error');
-      return;
+  const handlePlaceBetSlip = async (amount, totalOdds, potentialReturn) => {
+    if (betSlip.length === 0) return;
+    
+    if (betSlip.length === 1) {
+      const item = betSlip[0];
+      if (typeof item.bet.id === 'number') {
+        showToast('Supabase not set up yet — bet placement unavailable.', 'error');
+        return;
+      }
+      const { error } = await supabase.rpc('place_bet', {
+        p_bet_id: item.bet.id,
+        p_bet_title: item.bet.title,
+        p_option_label: item.option.label,
+        p_odds: item.option.odds,
+        p_amount: amount,
+        p_potential_return: potentialReturn,
+      });
+      if (error) { showToast(error.message, 'error'); return; }
+    } else {
+      const legs = betSlip.map(item => ({
+         bet_id: item.bet.id,
+         bet_title: item.bet.title,
+         option_label: item.option.label,
+         odds: item.option.odds,
+         status: 'pending'
+      }));
+      
+      const { error } = await supabase.rpc('place_multiple_bet', {
+        p_amount: amount,
+        p_total_odds: totalOdds,
+        p_potential_return: potentialReturn,
+        p_legs: legs
+      });
+      if (error) { showToast(error.message, 'error'); return; }
     }
-    const { error } = await supabase.rpc('place_bet', {
-      p_bet_id: selectedBet.id,
-      p_bet_title: selectedBet.title,
-      p_option_label: selectedOption.label,
-      p_odds: selectedOption.odds,
-      p_amount: amount,
-      p_potential_return: Math.floor(amount * selectedOption.odds),
-    });
-    if (error) { showToast(error.message, 'error'); return; }
+
     await loadProfile();
     await loadMyBets();
-    showToast(`Bet placed! Potential return: ${Math.floor(amount * selectedOption.odds).toLocaleString()} TIPS 🎯`);
-    setSelectedBet(null);
-    setSelectedOption(null);
+    showToast(`Aposta colocada! Retorno possível: ${potentialReturn.toLocaleString()} TIPS 🎯`);
+    setBetSlip([]);
+    setIsBetSlipOpen(false);
   };
 
   const handleClaim = async () => {
@@ -196,10 +232,42 @@ function AppContent() {
 
       {toast && <Toast {...toast} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
-      {selectedBet && selectedOption && (
-        <BetModal bet={selectedBet} option={selectedOption} balance={balance}
-          onConfirm={handlePlaceBet}
-          onClose={() => { setSelectedBet(null); setSelectedOption(null); }} />
+      
+      {isBetSlipOpen && (
+        <BetSlipModal 
+          betSlip={betSlip} 
+          balance={balance}
+          onConfirm={handlePlaceBetSlip}
+          onClose={() => setIsBetSlipOpen(false)} 
+          onRemove={(betId) => setBetSlip(prev => prev.filter(item => item.bet.id !== betId))}
+        />
+      )}
+
+      {/* Sticky Bet Slip Bar */}
+      {betSlip.length > 0 && !isBetSlipOpen && (
+        <div style={{
+          position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+          width: 'calc(100% - 32px)', maxWidth: 400,
+          background: '#ef4444', 
+          borderRadius: 16, padding: '12px 16px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          boxShadow: '0 10px 25px rgba(239, 68, 68, 0.4)', zIndex: 300, cursor: 'pointer'
+        }} onClick={() => setIsBetSlipOpen(true)}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>
+              {betSlip.length === 1 ? 'Aposta Simples' : `Múltipla (${betSlip.length})`}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: 600 }}>
+              {betSlip.map(item => item.bet.title).join(', ').substring(0, 30)}...
+            </span>
+          </div>
+          <div style={{ 
+            background: '#fde047', color: '#1a1a1a', fontWeight: 800, fontSize: 16,
+            padding: '6px 12px', borderRadius: 8, border: '1px solid #facc15'
+          }}>
+            {(betSlip.reduce((acc, curr) => acc * curr.option.odds, 1)).toFixed(2)}
+          </div>
+        </div>
       )}
 
       <Navbar onLoginClick={() => setShowLogin(true)} balance={balance}
@@ -257,9 +325,17 @@ function AppContent() {
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {filteredBets.map(bet => (
-                  <BetCard key={bet.id} bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }} onOptionClick={handleOptionClick} />
-                ))}
+                {filteredBets.map(bet => {
+                  const selectedItem = betSlip.find(item => item.bet.id === bet.id);
+                  return (
+                    <BetCard 
+                      key={bet.id} 
+                      bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }} 
+                      onOptionClick={handleOptionClick} 
+                      selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
+                    />
+                  );
+                })}
               </div>
             </div>
 

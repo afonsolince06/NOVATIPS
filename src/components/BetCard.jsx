@@ -1,4 +1,4 @@
-export default function BetCard({ bet, onOptionClick }) {
+export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
   const closesLabel = bet.closes_in_label || bet.closesIn || '';
   
   // Calculate automatic expiry based on hours in the label
@@ -107,6 +107,7 @@ export default function BetCard({ bet, onOptionClick }) {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {opts.map((opt, i) => {
           const isNo = opt.label.toLowerCase().trim() === 'não' || opt.label.toLowerCase().trim() === 'nao';
+          const isSelected = selectedOptionLabel === opt.label;
           
           return (
             <button
@@ -114,26 +115,28 @@ export default function BetCard({ bet, onOptionClick }) {
               disabled={isExpired}
               onClick={() => !isExpired && onOptionClick(bet, opt)}
               style={{
-                flex: 1, minWidth: 80, background: isExpired ? '#f8fafc' : '#ffffff',
-                border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 8px',
+                flex: 1, minWidth: 80, 
+                background: isExpired ? '#f8fafc' : (isSelected ? '#1a1a1a' : '#ffffff'),
+                border: isSelected ? '1px solid #1a1a1a' : '1px solid #e2e8f0', 
+                borderRadius: 8, padding: '12px 8px',
                 cursor: isExpired ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               }}
               onMouseEnter={e => { 
-                if (isExpired) return;
+                if (isExpired || isSelected) return;
                 e.currentTarget.style.transform = 'scale(1.03)';
                 e.currentTarget.style.borderColor = isNo ? '#ef4444' : '#84cc16';
                 e.currentTarget.style.boxShadow = isNo ? '0 4px 6px -1px rgba(239, 68, 68, 0.1)' : '0 4px 6px -1px rgba(132, 204, 22, 0.1)';
               }}
               onMouseLeave={e => { 
-                if (isExpired) return;
+                if (isExpired || isSelected) return;
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.borderColor = '#e2e8f0';
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isNo ? '#ef4444' : '#475569'), fontWeight: 600 }}>{opt.label}</span>
-              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isNo ? '#ef4444' : '#00c853') }}>
+              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isSelected ? '#fff' : (isNo ? '#ef4444' : '#475569')), fontWeight: 600 }}>{opt.label}</span>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isSelected ? '#84cc16' : (isNo ? '#ef4444' : '#00c853')) }}>
                 {opt.odds.toFixed(2)}
               </span>
             </button>
