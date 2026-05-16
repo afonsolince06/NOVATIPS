@@ -116,8 +116,8 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
               onClick={() => !isExpired && onOptionClick(bet, opt)}
               style={{
                 flex: 1, minWidth: 80, 
-                background: isExpired ? '#f8fafc' : (isSelected ? '#1a1a1a' : '#ffffff'),
-                border: isSelected ? '1px solid #1a1a1a' : '1px solid #e2e8f0', 
+                background: isExpired ? '#f8fafc' : (isSelected ? '#1e90ff' : '#ffffff'),
+                border: isSelected ? '1px solid #1e90ff' : '1px solid #e2e8f0', 
                 borderRadius: 8, padding: '12px 8px',
                 cursor: isExpired ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -135,8 +135,8 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isSelected ? '#fff' : (isNo ? '#ef4444' : '#475569')), fontWeight: 600 }}>{opt.label}</span>
-              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isSelected ? '#84cc16' : (isNo ? '#ef4444' : '#00c853')) }}>
+              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isSelected ? '#e0f2fe' : (isNo ? '#ef4444' : '#475569')), fontWeight: 600 }}>{opt.label}</span>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isSelected ? '#ffffff' : (isNo ? '#ef4444' : '#00c853')) }}>
                 {opt.odds.toFixed(2)}
               </span>
             </button>

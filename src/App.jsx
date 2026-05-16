@@ -248,10 +248,10 @@ function AppContent() {
         <div style={{
           position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)', maxWidth: 400,
-          background: '#ef4444', 
+          background: '#1e90ff', 
           borderRadius: 16, padding: '12px 16px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          boxShadow: '0 10px 25px rgba(239, 68, 68, 0.4)', zIndex: 300, cursor: 'pointer'
+          boxShadow: '0 10px 25px rgba(30, 144, 255, 0.4)', zIndex: 300, cursor: 'pointer'
         }} onClick={() => setIsBetSlipOpen(true)}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>

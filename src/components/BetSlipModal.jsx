@@ -43,7 +43,7 @@ export default function BetSlipModal({ betSlip, balance, onConfirm, onClose, onR
           <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 20, margin: 0, color: '#1a1a1a' }}>
             Boletim de Apostas
           </h3>
-          <span style={{ background: isMultiple ? '#1a1a1a' : '#84cc16', color: isMultiple ? '#fff' : '#1a1a1a', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
+          <span style={{ background: isMultiple ? '#1e90ff' : '#84cc16', color: isMultiple ? '#fff' : '#1a1a1a', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 800 }}>
             {isMultiple ? `Múltiplas (${betSlip.length})` : 'Simples'}
           </span>
         </div>
@@ -123,8 +123,8 @@ export default function BetSlipModal({ betSlip, balance, onConfirm, onClose, onR
               key={q}
               onClick={() => setAmount(Math.min(q, balance))}
               style={{
-                flex: 1, background: amount === q ? '#1a1a1a' : '#ffffff',
-                border: `1px solid ${amount === q ? '#1a1a1a' : '#e2e8f0'}`,
+                flex: 1, background: amount === q ? '#1e90ff' : '#ffffff',
+                border: `1px solid ${amount === q ? '#1e90ff' : '#e2e8f0'}`,
                 borderRadius: 8, padding: '8px 0', color: amount === q ? '#fff' : '#475569',
                 fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s'
               }}
