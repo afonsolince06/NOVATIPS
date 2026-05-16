@@ -7,6 +7,7 @@ import BetCard from './components/BetCard';
 import BetModal from './components/BetModal';
 import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
+import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
 import BetSlipModal from './components/BetSlipModal';
 import ProfileModal from './components/ProfileModal';
