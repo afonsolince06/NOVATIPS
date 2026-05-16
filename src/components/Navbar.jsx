@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab, isAdmin }) {
+export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin }) {
   const { user, signOut } = useAuth();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,34 +65,31 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
         {/* Right Side (Wallet & Hamburger) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {user && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: '#f0fdf4', border: '1px solid #bbf7d0',
-              borderRadius: 20, padding: '6px 14px',
-            }}>
+            <div 
+              onClick={onProfileClick}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: '#f0fdf4', border: '1px solid #bbf7d0',
+                borderRadius: 20, padding: '6px 14px', cursor: 'pointer'
+              }}>
               <span style={{ fontSize: 13, color: '#166534', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
                 TIPS {balance.toLocaleString()}
               </span>
             </div>
           )}
 
-          {/* Desktop User Info & Logout */}
+          {/* Desktop User Info */}
           {!isMobile && user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: '50%',
-                background: '#ecfccb', color: '#65a30d',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, fontSize: 14,
-              }}>{initial}</div>
-              <button
-                onClick={signOut}
+              <div 
+                onClick={onProfileClick}
                 style={{
-                  background: '#fef2f2', border: '1px solid #fecaca',
-                  color: '#ef4444', borderRadius: 8, padding: '6px 12px',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                }}
-              >Logout</button>
+                  width: 34, height: 34, borderRadius: '50%',
+                  background: '#ecfccb', color: '#65a30d',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(132, 204, 22, 0.2)'
+              }}>{initial}</div>
             </div>
           )}
 
@@ -145,14 +142,14 @@ export default function Navbar({ onLoginClick, balance, activeTab, setActiveTab,
           ))}
           {user && (
             <button
-              onClick={() => { signOut(); setIsMenuOpen(false); }}
+              onClick={() => { onProfileClick(); setIsMenuOpen(false); }}
               style={{
-                background: '#fef2f2', border: '1px solid #fecaca',
-                color: '#ef4444', borderRadius: 8, padding: '12px',
+                background: '#f0fdf4', border: '1px solid #bbf7d0',
+                color: '#166534', borderRadius: 8, padding: '12px',
                 fontSize: 15, fontWeight: 700, cursor: 'pointer',
                 textAlign: 'center'
               }}
-            >Logout</button>
+            >O meu perfil</button>
           )}
         </div>
       )}

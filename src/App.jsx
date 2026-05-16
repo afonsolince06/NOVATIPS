@@ -7,9 +7,9 @@ import BetCard from './components/BetCard';
 import BetModal from './components/BetModal';
 import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
-import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
 import BetSlipModal from './components/BetSlipModal';
+import ProfileModal from './components/ProfileModal';
 import Toast from './components/Toast';
 import Footer from './components/Footer';
 
@@ -32,6 +32,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('bets');
   const [betSlip, setBetSlip] = useState([]);
   const [isBetSlipOpen, setIsBetSlipOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [myBets, setMyBets] = useState([]);
   const [toast, setToast] = useState(null);
@@ -243,6 +244,15 @@ function AppContent() {
         />
       )}
 
+      {isProfileOpen && user && (
+        <ProfileModal 
+          user={user}
+          balance={balance}
+          onClose={() => setIsProfileOpen(false)}
+          onSignOut={async () => { await supabase.auth.signOut(); setIsProfileOpen(false); }}
+        />
+      )}
+
       {/* Sticky Bet Slip Bar */}
       {betSlip.length > 0 && !isBetSlipOpen && (
         <div style={{
@@ -270,7 +280,10 @@ function AppContent() {
         </div>
       )}
 
-      <Navbar onLoginClick={() => setShowLogin(true)} balance={balance}
+      <Navbar 
+        onLoginClick={() => setShowLogin(true)} 
+        onProfileClick={() => setIsProfileOpen(true)}
+        balance={balance} 
         activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
 
       {/* ── BETS TAB ── */}
