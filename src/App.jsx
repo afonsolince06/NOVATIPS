@@ -67,8 +67,8 @@ function AppContent() {
         supabase.rpc('process_referral', { p_referrer_id: ref })
           .then(({ error }) => {
             if (!error) {
-               showToast('Código de amigo ativado! Ganhaste +500 TIPS 🎁');
-               loadProfile(); // update balance
+              showToast('Código de amigo ativado! Ganhaste +500 TIPS 🎁');
+              loadProfile(); // update balance
             }
             localStorage.removeItem('referralCode'); // only try once
           });
@@ -128,18 +128,18 @@ function AppContent() {
 
   const handleOptionClick = (bet, option) => {
     if (!user) { setShowLogin(true); return; }
-    
+
     const existingIndex = betSlip.findIndex(item => item.bet.id === bet.id);
-    
+
     if (existingIndex !== -1) {
       if (betSlip[existingIndex].option.label === option.label) {
-         setBetSlip(prev => prev.filter((_, i) => i !== existingIndex)); // remove
+        setBetSlip(prev => prev.filter((_, i) => i !== existingIndex)); // remove
       } else {
-         setBetSlip(prev => { // replace option
-            const newSlip = [...prev];
-            newSlip[existingIndex] = { bet, option };
-            return newSlip;
-         });
+        setBetSlip(prev => { // replace option
+          const newSlip = [...prev];
+          newSlip[existingIndex] = { bet, option };
+          return newSlip;
+        });
       }
     } else {
       setBetSlip(prev => [...prev, { bet, option }]); // add
@@ -148,7 +148,7 @@ function AppContent() {
 
   const handlePlaceBetSlip = async (amount, totalOdds, potentialReturn) => {
     if (betSlip.length === 0) return;
-    
+
     if (betSlip.length === 1) {
       const item = betSlip[0];
       if (typeof item.bet.id === 'number') {
@@ -157,26 +157,21 @@ function AppContent() {
       }
       const { error } = await supabase.rpc('place_bet', {
         p_bet_id: item.bet.id,
-        p_bet_title: item.bet.title,
         p_option_label: item.option.label,
-        p_odds: item.option.odds,
-        p_amount: amount,
-        p_potential_return: potentialReturn,
+        p_amount: amount
       });
       if (error) { showToast(error.message, 'error'); return; }
     } else {
       const legs = betSlip.map(item => ({
-         bet_id: item.bet.id,
-         bet_title: item.bet.title,
-         option_label: item.option.label,
-         odds: item.option.odds,
-         status: 'pending'
+        bet_id: item.bet.id,
+        bet_title: item.bet.title,
+        option_label: item.option.label,
+        odds: item.option.odds,
+        status: 'pending'
       }));
-      
+
       const { error } = await supabase.rpc('place_multiple_bet', {
         p_amount: amount,
-        p_total_odds: totalOdds,
-        p_potential_return: potentialReturn,
         p_legs: legs
       });
       if (error) { showToast(error.message, 'error'); return; }
@@ -263,19 +258,19 @@ function AppContent() {
 
       {toast && <Toast {...toast} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
-      
+
       {isBetSlipOpen && (
-        <BetSlipModal 
-          betSlip={betSlip} 
+        <BetSlipModal
+          betSlip={betSlip}
           balance={balance}
           onConfirm={handlePlaceBetSlip}
-          onClose={() => setIsBetSlipOpen(false)} 
+          onClose={() => setIsBetSlipOpen(false)}
           onRemove={(betId) => setBetSlip(prev => prev.filter(item => item.bet.id !== betId))}
         />
       )}
 
       {isProfileOpen && user && (
-        <ProfileModal 
+        <ProfileModal
           user={user}
           balance={balance}
           username={username}
@@ -290,7 +285,7 @@ function AppContent() {
         <div style={{
           position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)', maxWidth: 400,
-          background: '#84cc16', 
+          background: '#84cc16',
           borderRadius: 16, padding: '12px 16px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           boxShadow: '0 10px 25px rgba(132, 204, 22, 0.4)', zIndex: 300, cursor: 'pointer'
@@ -303,7 +298,7 @@ function AppContent() {
               {betSlip.map(item => item.bet.title).join(', ').substring(0, 30)}...
             </span>
           </div>
-          <div style={{ 
+          <div style={{
             background: '#fde047', color: '#1a1a1a', fontWeight: 800, fontSize: 16,
             padding: '6px 12px', borderRadius: 8, border: '1px solid #facc15'
           }}>
@@ -312,21 +307,21 @@ function AppContent() {
         </div>
       )}
 
-      <Navbar 
-        onLoginClick={() => setShowLogin(true)} 
+      <Navbar
+        onLoginClick={() => setShowLogin(true)}
         onProfileClick={() => setIsProfileOpen(true)}
-        balance={balance} 
+        balance={balance}
         activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
 
       {/* ── BETS TAB ── */}
       {activeTab === 'bets' && (
         <>
           {/* Hero */}
-          <div style={{ 
-            padding: '60px 32px 50px', position: 'relative', overflow: 'hidden', 
+          <div style={{
+            padding: '60px 32px 50px', position: 'relative', overflow: 'hidden',
             backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%), url("/logo.jpg.jpeg")',
             backgroundSize: 'cover', backgroundPosition: 'center',
-            borderBottom: '1px solid #e5e7eb', marginBottom: 24 
+            borderBottom: '1px solid #e5e7eb', marginBottom: 24
           }}>
             <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#fca5a5', fontWeight: 700, backdropFilter: 'blur(4px)' }}>
@@ -334,7 +329,7 @@ function AppContent() {
               </div>
 
               <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#ffffff' }}>
-                IMS BEST TIPS.<br/>
+                IMS BEST TIPS.<br />
                 <span style={{ color: '#a3e635' }}>Dicas que marcam.</span>
               </h1>
               <p style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
@@ -363,20 +358,20 @@ function AppContent() {
                   }}>{f === 'Hot' ? '🔥 Hot' : f === 'Closing' ? '⏰ Closing' : f}</button>
                 ))}
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: 0.5 }}>Active Bets</span>
                 <span style={{ fontSize: 13, color: '#888', fontWeight: 500 }}>{filteredBets.length} available</span>
               </div>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {filteredBets.map(bet => {
                   const selectedItem = betSlip.find(item => item.bet.id === bet.id);
                   return (
-                    <BetCard 
-                      key={bet.id} 
-                      bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }} 
-                      onOptionClick={handleOptionClick} 
+                    <BetCard
+                      key={bet.id}
+                      bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }}
+                      onOptionClick={handleOptionClick}
                       selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
                     />
                   );
@@ -393,7 +388,7 @@ function AppContent() {
                   <span style={{ color: '#84cc16' }}>TIPS</span> {user ? balance.toLocaleString() : '—'}
                 </div>
                 <div style={{ fontSize: 13, color: '#666', marginBottom: 20 }}>Saldo disponível</div>
-                
+
                 <button onClick={handleClaim} style={{
                   width: '100%',
                   background: canClaim ? '#f0f9ff' : '#f3f4f6',
@@ -403,7 +398,7 @@ function AppContent() {
                   transition: 'all 0.2s'
                 }}>{canClaim ? '🎁 Claim weekly +1000 TIPS' : '✓ Claimed this week'}</button>
               </div>
-              
+
               {/* Disclaimer */}
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px' }}>
                 <p style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6, margin: 0, textAlign: 'center', fontWeight: 500 }}>

@@ -14,7 +14,7 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
 
   const handleSaveUsername = async () => {
     if (!tempUsername.trim()) return;
-    const { error } = await supabase.from('profiles').update({ username: tempUsername.trim() }).eq('id', user.id);
+    const { error } = await supabase.rpc('update_my_username', { new_username: tempUsername.trim() });
     if (!error) {
       setUsername(tempUsername.trim());
       setIsEditingUsername(false);
