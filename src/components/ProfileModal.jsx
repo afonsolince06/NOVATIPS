@@ -150,6 +150,22 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
               <span style={{ color: '#cbd5e1' }}>›</span>
             </div>
           </div>
+
+          {/* Instagram */}
+          <a 
+            href="https://www.instagram.com/novatips_?igsh=MXNoa3pwd2NpMWhteA=="
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', cursor: 'pointer', textDecoration: 'none', borderTop: '1px solid #f1f5f9' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 20 }}>📸</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>Segue-nos no Instagram</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: '#cbd5e1' }}>›</span>
+            </div>
+          </a>
         </div>
 
         {/* Logout */}
