@@ -95,7 +95,7 @@ function AppContent() {
   const loadBets = async () => {
     const { data } = await supabase
       .from('bets').select('*').eq('status', 'open').order('created_at', { ascending: false });
-    setBets(data?.length ? data : INITIAL_BETS);
+    setBets(data || []);
   };
 
   const loadProfile = async () => {
@@ -233,6 +233,15 @@ function AppContent() {
     showToast(`Resolved! "${winningOption}" wins. TIPS credited to winners ✅`);
   };
 
+  const handleDeleteBet = async (betId) => {
+    if (!window.confirm("Tens a certeza que queres APAGAR esta aposta? Todos os TIPS apostados nela serão devolvidos.")) return;
+    const { error } = await supabase.rpc('delete_bet', { p_bet_id: betId });
+    if (error) { showToast('Error deleting: ' + error.message, 'error'); return; }
+    await loadBets();
+    await loadProfile();
+    showToast(`Aposta apagada e saldos reembolsados! 🗑️`);
+  };
+
   // ── Derived state ────────────────────────────────────────────────────────
 
   const canClaim = !lastClaim || (new Date() - new Date(lastClaim)) / (1000 * 60 * 60 * 24) >= 7;
@@ -364,19 +373,27 @@ function AppContent() {
                 <span style={{ fontSize: 13, color: '#888', fontWeight: 500 }}>{filteredBets.length} available</span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {filteredBets.map(bet => {
-                  const selectedItem = betSlip.find(item => item.bet.id === bet.id);
-                  return (
-                    <BetCard
-                      key={bet.id}
-                      bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }}
-                      onOptionClick={handleOptionClick}
-                      selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
-                    />
-                  );
-                })}
-              </div>
+              {filteredBets.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: '#ffffff', borderRadius: 16, border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                  <div style={{ fontSize: 40, marginBottom: 16 }}>🏁</div>
+                  <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 8, color: '#1a1a1a', fontFamily: "'Space Grotesk', sans-serif" }}>Nenhuma aposta disponível</div>
+                  <div style={{ fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>A equipa da NOVA TIPS está a preparar novas previsões.<br/>Volta mais tarde!</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {filteredBets.map(bet => {
+                    const selectedItem = betSlip.find(item => item.bet.id === bet.id);
+                    return (
+                      <BetCard
+                        key={bet.id}
+                        bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }}
+                        onOptionClick={handleOptionClick}
+                        selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -435,7 +452,7 @@ function AppContent() {
       {/* ── ADMIN TAB ── */}
       {activeTab === 'admin' && isAdmin && (
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
-          <AdminPanel openBets={bets} onAddBet={handleAddBet} onResolveBet={handleResolveBet} />
+          <AdminPanel openBets={bets} onAddBet={handleAddBet} onResolveBet={handleResolveBet} onDeleteBet={handleDeleteBet} />
         </div>
       )}
 

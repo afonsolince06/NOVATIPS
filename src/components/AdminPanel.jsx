@@ -8,7 +8,7 @@ function generateOppositeOdds(simOdds) {
   return (Math.round((o / (o - 1)) * 0.92 * 100) / 100).toFixed(2);
 }
 
-export default function AdminPanel({ openBets = [], onAddBet, onResolveBet }) {
+export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet }) {
 
   // ── Create Bet form ──────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -98,7 +98,10 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet }) {
           const isResolving = resolvingId === bet.id;
           return (
             <div key={bet.id} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px', marginBottom: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: '#1a1a1a' }}>{bet.title}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a' }}>{bet.title}</div>
+                <button onClick={() => onDeleteBet(bet.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Apagar 🗑️</button>
+              </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: isResolving ? 16 : 0 }}>
                 {opts.map((opt, i) => (
                   <button key={i} onClick={() => { setResolvingId(bet.id); setWinningOption(opt.label); }}
