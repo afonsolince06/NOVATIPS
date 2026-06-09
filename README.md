@@ -1,16 +1,32 @@
-# React + Vite
+# NOVA TIPS 🎯
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+NOVA TIPS is a virtual prediction platform created for the NOVA IMS community.
 
-Currently, two official plugins are available:
+Users receive virtual currency (**TIPS**) and can place bets on campus events, academic life, student traditions, sports, parties, elections, and other community moments. No real money is involved — everything is designed for fun, engagement, and friendly competition.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Features
 
-## React Compiler
+*  Create and participate in custom prediction markets
+*  Virtual currency system (TIPS)
+*  Leaderboard ranking system
+*  Personal betting history
+*  Admin panel for creating and resolving bets
+*  Secure login with NOVA IMS institutional email
+*  Cloud database powered by Supabase
+*  Deployed online and accessible from any device
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### How it Works
 
-## Expanding the ESLint configuration
+1. Sign in with your NOVA IMS email.
+2. Receive virtual TIPS.
+3. Place bets on active events.
+4. Earn rewards for correct predictions.
+5. Climb the leaderboard and become a campus prediction legend.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Disclaimer
+
+NOVA TIPS is strictly for entertainment purposes.
+
+No real money, gambling, or financial rewards are involved. All bets use virtual currency and are intended to increase engagement within the NOVA IMS community.
+
+**NOVA TIPS — Dicas que marcam.**
