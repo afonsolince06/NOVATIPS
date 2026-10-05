@@ -707,7 +707,7 @@ function AppContent() {
 
       {/* ── MY BETS TAB ── */}
       {activeTab === 'history' && (
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
+        <div className="history-page-background"><div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
           {!user ? (
             <div style={{ textAlign: 'center', padding: '60px 0', background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb' }}>
               <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
@@ -715,7 +715,7 @@ function AppContent() {
               <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', borderRadius: 8, padding: '12px 24px', cursor: 'pointer' }}>Login 🎓</button>
             </div>
           ) : <MyBets myBets={myBets} bets={bets} sections={FRESHERS_WEEKEND_SECTIONS} onViewBets={() => setActiveTab('bets')} />}
-        </div>
+        </div></div>
       )}
 
       {/* ── ADMIN TAB ── */}
