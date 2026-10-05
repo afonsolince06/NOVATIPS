@@ -13,6 +13,7 @@ import Missions from './components/Missions';
 import FdsSidebar from './components/FdsSidebar';
 import MegaBoost from './components/MegaBoost';
 import { findActiveMegaBoost } from './lib/megaBoost';
+import {isPredictionPublic} from './lib/scheduling';
 import BetSlipModal from './components/BetSlipModal';
 import ProfileModal from './components/ProfileModal';
 import Toast from './components/Toast';
@@ -133,9 +134,12 @@ function AppContent() {
   // Load bets on mount
   useEffect(() => {
     let active = true;
-    fetchBets().then(data => { if (active) setBets(data); });
-    return () => { active = false; };
-  }, [fetchBets]);
+    const refresh = () => fetchBets().then(data => { if (active) setBets(data); });
+    refresh();
+    const timer = isFreshersWeekendEdition && !isFreshersWeekendDemo ? setInterval(refresh, 15000) : null;
+    window.addEventListener('focus', refresh);
+    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [fetchBets,user?.id]);
 
   useEffect(() => {
     document.title = isFreshersWeekendEdition
@@ -195,7 +199,7 @@ function AppContent() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'bets' },
         (payload) => {
-          if (payload.new?.status === 'open') {
+          if (payload.new?.status === 'open' && (!isFreshersWeekendEdition || isPredictionPublic(payload.new))) {
             showToast(`🎯 Nova aposta: ${payload.new.title}`, 'info');
             loadBets();
           }
@@ -209,6 +213,7 @@ function AppContent() {
   // ── Actions ──────────────────────────────────────────────────────────────
 
   const handleOptionClick = (bet, option) => {
+    if (isFreshersWeekendEdition && !isPredictionPublic(bet)) { showToast('Esta previsão ainda não foi publicada.', 'info'); return; }
     if (isFreshersWeekendDemo) {
       showToast('Demonstração visual: as apostas ainda não estão ligadas.', 'info');
       return;
@@ -365,9 +370,10 @@ function AppContent() {
 
   const canClaim = !lastClaim || (new Date() - new Date(lastClaim)) / (1000 * 60 * 60 * 24) >= 7;
 
-  const megaBoost = isFreshersWeekendEdition ? findActiveMegaBoost(bets, filterNow) : null;
+  const publicBets = isFreshersWeekendEdition ? bets.filter(b=>isPredictionPublic(b,filterNow)) : bets;
+  const megaBoost = isFreshersWeekendEdition ? findActiveMegaBoost(publicBets, filterNow) : null;
 
-  const filteredBets = bets.filter(b => {
+  const filteredBets = publicBets.filter(b => {
     if (b.id === megaBoost?.id) return false;
     if (filter === 'Hot') return b.trending;
     if (filter === 'Closing') {

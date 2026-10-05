@@ -1,7 +1,8 @@
+import {windowState} from './scheduling.js';
 export const instagramUrl='https://www.instagram.com/novatips_?igsh=MXNoa3pwd2NpMWhteA==';
 export const missionTypes={normal:'📷 Normal',race:'⚡ Primeiros',competition:'🏆 Competição'};
 export const missionStates={draft:'Rascunho',scheduled:'Em breve',active:'Ativa',paused:'Pausada',closed:'Terminada',completed:'Concluída',full:'Vagas preenchidas'};
-export function missionState(m,now=Date.now()){if(['draft','paused','closed','completed'].includes(m.status))return m.status;if(now>=Date.parse(m.end_at))return 'closed';if(now<Date.parse(m.start_at))return 'scheduled';if(m.mission_type!=='competition'&&m.max_winners&&Number(m.rewarded||0)>=m.max_winners)return 'full';return 'active';}
+export function missionState(m,now=Date.now()){if(['draft','paused','closed','completed'].includes(m.status))return m.status;const state=windowState(m.start_at,m.end_at,now);if(state!=='active')return state;if(m.mission_type!=='competition'&&m.max_winners&&Number(m.rewarded||0)>=m.max_winners)return 'full';return 'active';}
 export function missionCountdown(m,now=Date.now()){const delta=Math.max(0,Math.ceil((Date.parse(missionState(m,now)==='scheduled'?m.start_at:m.end_at)-now)/1000));if(!Number.isFinite(delta))return '—';const hours=Math.floor(delta/3600);return (hours?hours+'h ':'')+String(Math.floor(delta%3600/60)).padStart(2,'0')+':'+String(delta%60).padStart(2,'0');}
 export function sortMissions(missions,now=Date.now()){const score=m=>missionState(m,now)==='active'?(m.is_flash?0:m.featured?1:2):missionState(m,now)==='scheduled'?3:4;return [...missions].sort((a,b)=>score(a)-score(b)||Date.parse(a.end_at)-Date.parse(b.end_at));}
 export function normalizeInstagram(value){return value.trim().toLowerCase().replace(/^https?:\/\/(www\.)?instagram\.com\//,'').replace(/[/?].*$/,'').replace(/^@+/,'');}

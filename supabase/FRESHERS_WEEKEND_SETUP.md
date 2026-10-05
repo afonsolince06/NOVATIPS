@@ -74,7 +74,7 @@ Testar com duas contas: criar inativo, ativar, selecionar Sim/Não, colocar apos
 
 ### Editor unificado do Admin
 
-Aplicar `migrations/20261005000700_unified_prediction_editor.sql` depois da 006 no projeto FDS. O Admin usa um único editor Normal/Mega Boost, com pré-visualização e imagem selecionada. `save_prediction` reutiliza `save_mega_boost` e mantém a validação e bloqueio de opções após apostas. Odd B vazia é calculada pela fórmula existente no cliente; cada boost é opcional e independente. Rascunhos ficam apenas no browser, sem publicar e sem guardar ficheiros locais de imagem. A resolução e redefinição de acesso continuam nas respetivas opções do Admin.
+Aplicar `migrations/20261005000700_unified_prediction_editor.sql` depois da 006 no projeto FDS. O Admin usa um único editor Normal/Mega Boost, com pré-visualização e imagem selecionada. `save_prediction` reutiliza `save_mega_boost` e mantém a validação e bloqueio de opções após apostas. Odd B vazia é calculada pela fórmula existente no cliente; cada boost é opcional e independente. Antes da migração 010, os rascunhos ficam no browser, sem publicar e sem guardar ficheiros locais de imagem. Depois da 010, o editor guarda rascunhos válidos no servidor, visíveis apenas aos admins. A resolução e redefinição de acesso continuam nas respetivas opções do Admin.
 
 ## Missões FDS — ativação
 
@@ -102,3 +102,62 @@ O saldo é atualizado após operações do Admin e ao mudar de separador. Durant
 7. Testa criar/apostar/resolver uma previsão normal, Mega Boost, My Bets e logout/login, com duas contas reais no FDS.
 
 Testes automáticos locais: `node --test tests/*.test.mjs`. Para testar SQL numa base PostgreSQL isolada, sem tocar no Supabase: `npm install --prefix .tmp/mission-sql --no-save --no-package-lock @electric-sql/pglite`, seguido de `node tests/missions.database.mjs`. O teste cria apenas fixtures na memória e fecha a base no fim.
+
+## Publicação agendada e Gestão de TIPS
+
+No projeto **Supabase FDS**, depois da 009, executa uma vez e por ordem:
+
+1. `migrations/20261005001000_scheduled_predictions.sql`
+2. `migrations/20261005001100_admin_tips_grants.sql`
+
+Atualiza o site após executar o SQL. O Admin verifica as capacidades instaladas: sem a 010, não disponibiliza agendamento e guarda rascunhos apenas no browser; sem a 011, não disponibiliza atribuições de TIPS. Não executes estas migrações no projeto antigo.
+
+### Previsões
+
+O editor Normal/Mega Boost continua único. **Publicação → Agora / Agendar** controla a visibilidade, enquanto **Fecha em** controla o fim das apostas. Os presets de fecho são calculados a partir da publicação agendada. Os campos usam a mesma função de hora local das Missões e enviam timestamps UTC.
+
+- Admin → **Previsões**: filtros Rascunhos, Agendadas, Ativas, Fechadas e Resolvidas.
+- Editar usa o editor existente. **Publicar agora** mantém o fecho; **Cancelar agendamento** move a previsão para rascunho.
+- RLS bloqueia rascunhos/futuras nas consultas dos participantes. Os RPCs de aposta simples/múltipla também bloqueiam antes do início e depois do fecho.
+- Os estados existentes `open/resolved/cancelled` são preservados. Agendada/Ativa/Fechada são calculados pelas datas; não há cron nem alteração da resolução.
+- Depois de haver apostas, não é possível ocultar/reagendar a previsão nem alterar opções/odds.
+- Rascunhos no servidor precisam de título, opções/odds válidas e janela de datas válida. Mega Boost só exige banner ao publicar.
+- Continua a existir apenas um Mega Boost publicado com destaque ativo, incluindo uma reserva futura. Substituir essa reserva desativa o anterior mediante confirmação; rascunhos não reservam o destaque.
+- As notificações Realtime existentes são preservadas: Postgres Changes aplica as políticas SELECT RLS ([documentação Supabase](https://supabase.com/docs/guides/realtime/authorization)). O cliente também não mostra toasts de futuras/rascunhos a admins. As consultas públicas recarregam a cada 15 segundos e ao regressar à janela. A autorização temporal é imediata no servidor; a aparição numa página já aberta ocorre na próxima consulta. Não são enviados push notifications ao guardar um rascunho/agendamento.
+
+### Gestão de TIPS
+
+Admin → **Gestão de TIPS** permite apenas atribuições positivas (1–1.000.000 TIPS por pessoa), com motivo obrigatório. Pesquisa de utilizadores reutiliza a das Missões, limitada aos destinatários elegíveis.
+
+**Elegibilidade**, tanto para Utilizador como para Todos:
+
+- perfil real ligado a uma conta Auth;
+- email com acesso na lista FDS;
+- conta não eliminada nem com bloqueio Auth ativo;
+- elegibilidade manual permitida.
+
+`freshers_weekend_access.manual_tips_eligible` é uma opção administrativa:
+- `NULL`: participantes normais recebem; admins não recebem;
+- `true`: incluir explicitamente, inclusive um admin que participe legitimamente;
+- `false`: excluir, por exemplo uma conta de testes/organização.
+
+A migração marca admins existentes como excluídos. Não havia um campo de conta de testes/sistema no modelo anterior; esta opção torna a exclusão explícita. Só alters esta opção no Supabase/servidor, nunca no perfil do participante.
+
+Exemplo para incluir um admin participante ou excluir uma conta de testes:
+```sql
+UPDATE public.freshers_weekend_access
+SET manual_tips_eligible = true -- false para excluir
+WHERE email = 'numero@novaims.unl.pt';
+```
+
+A revisão mostra contagem real, total a distribuir e, para um utilizador, o saldo antes/depois. **Todos** exige escrever exatamente `CONFIRMAR`. Se os destinatários mudarem entre revisão e confirmação, a operação é recusada: cancela e revê uma nova atribuição.
+
+Os saldos atualizam `profiles.balance`, com bloqueios de linhas e uma única transação. `admin_tips_grant_batches` regista motivo/admin/montante/destinatários e `admin_tips_grant_entries` regista cada crédito `ADMIN_GRANT`, incluindo saldos antes/depois. Identificadores e nomes de auditoria sobrevivem à eliminação posterior de contas. O histórico Admin mostra as últimas 50 operações concluídas, sem emails.
+
+Cada revisão tem um identificador estável. Duplo clique ou repetição do pedido de confirmação devolve a mesma atribuição, sem pagar novamente. Uma nova operação deliberada cria outro identificador. Falhas no lote/auditoria anulam todos os créditos. Não foi criado um segundo saldo nem reescrita a contabilidade das apostas/Missões.
+
+### Testes
+
+- `node --test tests/*.test.mjs`: horários exatos, estados, fórmula de odds, Mega Boost, ranking, histórico e Missões.
+- Com PGlite instalado conforme a secção anterior: `node tests/admin-scheduling-tips.database.mjs`. Carrega todas as migrações numa base em memória e testa RLS de futuras/rascunhos, aposta simples/múltipla antes do início, edição/publicação/cancelamento, fecho/resolução, Mega Boost, atribuição única/lote, idempotência, elegibilidade, rollback e permissões.
+- Antes de usar com participantes reais, testa com duas contas: uma admin e outra normal. Confirma que a segunda não consegue consultar uma previsão futura por ID, que +500 aparece uma só vez e que o bónus Todos altera apenas contas elegíveis.

@@ -1,11 +1,25 @@
-import { useState } from 'react';
+import { useCallback,useEffect,useState } from 'react';
 import MissionsAdmin from './MissionsAdmin';
 import PredictionEditor from './PredictionEditor';
 import '../admin-editor.css';
+import {supabase} from '../lib/supabase';
+import {isPredictionPublic} from '../lib/scheduling';
+import AdminTips from './AdminTips';
+import PredictionManagement from './PredictionManagement';
 
 export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, onMissionReward, enableSections = false, sections = [] }) {
 
   const [panel, setPanel] = useState('create');
+  const [capabilities,setCapabilities]=useState(null);
+  useEffect(()=>{if(!enableSections)return;let active=true;supabase.rpc('fds_admin_capabilities').then(({data,error})=>{if(active)setCapabilities(error?{}:data);});return()=>{active=false;};},[enableSections]);
+  const [managedBets,setManagedBets]=useState([]);const [editId,setEditId]=useState('');const [managementError,setManagementError]=useState('');
+  const refreshManaged=useCallback(async()=>{if(!enableSections)return;const rows=[];for(let page=0;;page++){const {data,error}=await supabase.from('bets').select('*').order('created_at',{ascending:false}).order('id').range(page*1000,page*1000+999);if(error)throw error;rows.push(...data);if(data.length<1000)break;}setManagedBets(rows);setManagementError('');},[enableSections]);
+  useEffect(()=>{if(!enableSections)return;let active=true;async function load(){try{const rows=[];for(let page=0;;page++){const {data,error}=await supabase.from('bets').select('*').order('created_at',{ascending:false}).order('id').range(page*1000,page*1000+999);if(error)throw error;rows.push(...data);if(data.length<1000)break;}if(active){setManagedBets(rows);setManagementError('');}}catch(error){if(active)setManagementError(error.message);}}load();const timer=setInterval(load,15000);return()=>{active=false;clearInterval(timer);};},[enableSections]);
+  const editorBets=enableSections?managedBets.filter(b=>b.status==='open'):openBets;
+  const resolutionBets=enableSections?editorBets.filter(b=>isPredictionPublic(b)):openBets;
+  const saved=async()=>{await onMegaBoostSaved?.();await refreshManaged();};
+  const resolved=async(...args)=>{await onResolveBet(...args);await refreshManaged();};
+  const deleted=async id=>{await onDeleteBet(id);await refreshManaged();};
 
   // ── Resolve Bet section ──────────────────────────────────────────────────
   const [resolvingId, setResolvingId] = useState(null);
@@ -18,7 +32,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
   const confirmResolve = () => {
     if (!resolvingId || !winningOption) return;
-    onResolveBet(resolvingId, winningOption);
+    resolved(resolvingId, winningOption);
     setResolvingId(null);
     setWinningOption('');
   };
@@ -57,10 +71,14 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
   return (
     <div className="admin-control-center">
-<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],['resolve','✓ Resolver previsões'],...(enableSections ? [['missions','🔥 Missões']] : []),...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>setPanel(id)}>{label}</button>)}</nav><div className="admin-workspace">
+<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],...(enableSections?[['manage','▣ Previsões']]:[]),['resolve','✓ Resolver previsões'],...(enableSections ? [['missions','🔥 Missões'],['tips','💰 Gestão de TIPS']] : []),...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>{if(id==='create')setEditId('');setPanel(id);}}>{label}</button>)}</nav><div className="admin-workspace">
 
-      {panel === 'create' && <PredictionEditor bets={openBets} sections={sections} fdsMode={enableSections} onAddBet={onAddBet} onSaved={onMegaBoostSaved} />}
+      {panel === 'create' && <PredictionEditor key={editId||'new'} schedulingEnabled={Boolean(capabilities?.scheduled_predictions)} initialBet={managedBets.find(b=>b.id===editId)} bets={editorBets} sections={sections} fdsMode={enableSections} onAddBet={onAddBet} onSaved={saved} />}
 
+      {managementError&&<p className="editor-error" role="alert">{managementError}</p>}
+      {enableSections&&capabilities&&!capabilities.scheduled_predictions&&['create','manage'].includes(panel)&&<p className="editor-notice">Para ativar publicação agendada e rascunhos no servidor, executa a migração 20261005001000_scheduled_predictions.sql no Supabase FDS e atualiza esta página.</p>}
+      {panel === 'manage' && <PredictionManagement schedulingEnabled={Boolean(capabilities?.scheduled_predictions)} bets={managedBets} onEdit={bet=>{setEditId(bet.id);setPanel('create');}} onChanged={saved} onResolve={()=>setPanel('resolve')}/>}
+      {panel === 'tips' && (capabilities?.admin_tips_grants?<AdminTips onBalanceRefresh={onMissionReward}/>:<section className="editor-panel"><h1>💰 Gestão de TIPS</h1><p>{capabilities===null?'A verificar configuração…':'Executa as migrações 010 e 011 no Supabase FDS e atualiza esta página para ativar atribuições manuais de TIPS.'}</p></section>)}
       {panel === 'missions' && <MissionsAdmin onBalanceRefresh={onMissionReward} />}
 
       {/* ── RESOLVE BETS ── */}
@@ -69,9 +87,9 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#14532d' }}>✅ Resolve Bets</h2>
         <p style={{ color: '#166534', fontSize: 13, margin: '0 0 20px' }}>Select the winning outcome — winners get TIPS credited automatically.</p>
 
-        {openBets.filter(b => typeof b.id !== 'number').length === 0 ? (
+        {resolutionBets.filter(b => typeof b.id !== 'number').length === 0 ? (
           <div style={{ color: '#166534', fontSize: 14, textAlign: 'center', padding: '16px 0', fontWeight: 600 }}>No open bets to resolve.</div>
-        ) : openBets.filter(b => typeof b.id !== 'number').map(bet => {
+        ) : resolutionBets.filter(b => typeof b.id !== 'number').map(bet => {
           // Safe parse: handle string-encoded options from legacy bug
           let opts;
           try { opts = typeof bet.options === 'string' ? JSON.parse(bet.options) : (bet.options || []); } catch { opts = []; }
@@ -81,7 +99,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
             <div key={bet.id} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px', marginBottom: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a' }}>{bet.title}</div>
-                <button onClick={() => onDeleteBet(bet.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Apagar 🗑️</button>
+                <button onClick={() => deleted(bet.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Apagar 🗑️</button>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: isResolving ? 16 : 0 }}>
                 {bet.mega_boost && opts.length === 1 && <button type="button" onClick={() => { setResolvingId(bet.id); setWinningOption('__mega_not_happened'); }} style={{ padding: 10, borderRadius: 8, border: '1px solid #fecaca', color: '#b91c1c', cursor: 'pointer' }}>Não aconteceu — apostas perdidas</button>}
