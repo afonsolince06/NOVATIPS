@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import { isFreshersWeekendDemo, isFreshersWeekendEdition, supabase } from './lib/supabase';
@@ -7,9 +7,11 @@ import Navbar from './components/Navbar';
 import BetCard from './components/BetCard';
 import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
-import AdminPanel from './components/AdminPanel';
+
 import Leaderboard from './components/Leaderboard';
 import Missions from './components/Missions';
+import FdsGuide,{Onboarding,ContextHelp} from './components/FdsGuide';
+import useFdsExperience from './hooks/useFdsExperience';
 import FdsSidebar from './components/FdsSidebar';
 import MegaBoost from './components/MegaBoost';
 import { findActiveMegaBoost } from './lib/megaBoost';
@@ -20,10 +22,14 @@ import Toast from './components/Toast';
 import Footer from './components/Footer';
 import { useNotifications } from './hooks/useNotifications';
 
+const AdminPanel=lazy(()=>import('./components/AdminPanel'));
 const ADMIN_EMAILS = ['20241710@novaims.unl.pt']; // ← change to your email
 
 function AppContent() {
   const { user, passwordRecovery, finishPasswordRecovery } = useAuth();
+  const {experience,markExperience}=useFdsExperience(user);
+  const [replayUserId,setReplayUserId]=useState(null);
+  const closeOnboarding=useCallback(()=>{setReplayUserId(null);if(experience?.onboarding_version_seen<1)markExperience({onboarding:true});},[experience?.onboarding_version_seen,markExperience]);
   const [weekendAdminUserId, setWeekendAdminUserId] = useState(null);
   const isAdmin = isFreshersWeekendEdition
     ? Boolean(user && weekendAdminUserId === user.id)
@@ -402,6 +408,7 @@ function AppContent() {
       `}</style>
 
       {toast && <Toast {...toast} />}
+      {isFreshersWeekendEdition&&user&&experience&&!passwordRecovery&&!user.user_metadata?.force_password_change&&(experience.onboarding_version_seen<1||replayUserId===user.id)&&<Onboarding name={username||user.email?.split('@')[0]} houseNumber={experience.house_number} onClose={closeOnboarding}/>}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
 
       {isBetSlipOpen && (
@@ -420,6 +427,8 @@ function AppContent() {
           balance={balance}
           username={username}
           setUsername={setUsername}
+          houseNumber={experience?.house_number}
+          onGuide={()=>{setIsProfileOpen(false);setActiveTab('guide');}}
           forcePasswordChange={passwordRecovery || user.user_metadata?.force_password_change === true}
           passwordRecovery={passwordRecovery}
           onClose={() => {
@@ -479,6 +488,7 @@ function AppContent() {
         onNotifToggle={notifToggle}
       />
 
+      {activeTab==='guide'&&isFreshersWeekendEdition&&<FdsGuide name={username||user?.email?.split('@')[0]} houseNumber={experience?.house_number} onReplay={()=>user?setReplayUserId(user.id):setShowLogin(true)} onNavigate={tab=>{setIsProfileOpen(false);setActiveTab(tab);}}/>}
       {/* ── BETS TAB ── */}
       {activeTab === 'bets' && (
         <>
@@ -569,6 +579,7 @@ function AppContent() {
                   </div>
                   {isFreshersWeekendDemo && <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>}
 
+                  {megaBoost&&<ContextHelp key={user?.id} topic="mega_boost" experience={experience} onSeen={markExperience}/>}
                   {megaBoost && <MegaBoost bet={megaBoost} onExpandImage={setExpandedPoster} onOptionClick={handleOptionClick} selectedOptionLabel={betSlip.find(item => item.bet.id === megaBoost.id)?.option.label} />}
 
                   <div className="fds-demo-sections">
@@ -711,11 +722,11 @@ function AppContent() {
       {/* ── LEADERBOARD TAB ── */}
       {activeTab === 'leaderboard' && (
         <div className="admin-page" style={{ maxWidth: 1440, margin: '0 auto', padding: '24px 24px 60px' }}>
-          <Leaderboard user={user} />
+          <Leaderboard user={user} experience={experience} onSeen={markExperience} />
         </div>
       )}
 
-      {activeTab === 'missions' && isFreshersWeekendEdition && <Missions key={user?.id || 'guest'} user={user} onLogin={() => setShowLogin(true)} onBalanceRefresh={loadProfile} />}
+      {activeTab === 'missions' && isFreshersWeekendEdition && <Missions experience={experience} onSeen={markExperience} key={user?.id || 'guest'} user={user} onLogin={() => setShowLogin(true)} onBalanceRefresh={loadProfile} />}
 
       {/* ── MY BETS TAB ── */}
       {activeTab === 'history' && (
@@ -733,7 +744,7 @@ function AppContent() {
       {/* ── ADMIN TAB ── */}
       {activeTab === 'admin' && isAdmin && (
         <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 24px 60px' }}>
-          <AdminPanel
+          <Suspense fallback={<p role="status">A carregar Admin…</p>}><AdminPanel
             openBets={bets}
             onAddBet={handleAddBet}
             onMegaBoostSaved={loadBets}
@@ -743,7 +754,7 @@ function AppContent() {
             onResetPassword={isFreshersWeekendEdition ? handleAdminPasswordReset : null}
             enableSections={isFreshersWeekendEdition}
             sections={FRESHERS_WEEKEND_SECTIONS}
-          />
+          /></Suspense>
         </div>
       )}
 

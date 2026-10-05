@@ -161,3 +161,45 @@ Cada revisão tem um identificador estável. Duplo clique ou repetição do pedi
 - `node --test tests/*.test.mjs`: horários exatos, estados, fórmula de odds, Mega Boost, ranking, histórico e Missões.
 - Com PGlite instalado conforme a secção anterior: `node tests/admin-scheduling-tips.database.mjs`. Carrega todas as migrações numa base em memória e testa RLS de futuras/rascunhos, aposta simples/múltipla antes do início, edição/publicação/cancelamento, fecho/resolução, Mega Boost, atribuição única/lote, idempotência, elegibilidade, rollback e permissões.
 - Antes de usar com participantes reais, testa com duas contas: uma admin e outra normal. Confirma que a segunda não consegue consultar uma previsão futura por ID, que +500 aparece uma só vez e que o bónus Todos altera apenas contas elegíveis.
+
+## Casas FDS e onboarding — ativação
+
+No **Supabase FDS**, depois da 011, executa uma vez migrations/20261005001200_fds_houses_and_onboarding.sql e atualiza a página. O painel Casas verifica a capacidade instalada; antes do SQL não altera registos nem força onboarding. A edição antiga mantém a navegação habitual.
+
+### Lista oficial e importação
+
+O PDF e as imagens têm **105 participantes e 18 casas**, incluindo Casa 14. O ficheiro local private-imports/fds-houses-import.json contém 104 correspondências seguras e uma pendente; private-imports/fds-houses-matching-report.md documenta o cruzamento. Estes ficheiros privados são ignorados pelo Git e não entram no bundle público.
+
+- Luís Sousa 20241805 → Casa 4 foi confirmado pelo organizador; o outro Luís Sousa, 20261457, corresponde à Casa 7.
+- Ana Marroquin → Casa 9 permanece por confirmar: o PDF repete Marroquin nos dois campos, com candidato 20261266. Não é atribuída automaticamente.
+- Os restantes nomes foram comparados exatamente após normalizar acentos, apóstrofos e espaços. Não houve aproximação por nome parecido.
+
+Em **Admin → Casas**, carrega o JSON, escolhe **Pré-visualizar** e revê antes de **Confirmar importação das correspondências seguras**. O servidor usa o número de aluno. Duplicados, conflitos e nomes por resolver ficam de fora. Repetir a mesma confirmação não duplica atribuições. Se as casas mudarem entre revisão e confirmação, é necessário rever novamente.
+
+A importação não cria contas, não altera a allowlist e não atribui TIPS. Pessoas sem conta ficam como **Sem conta**, com a atribuição guardada no roster; ao registarem-se com o email institucional autorizado, recebem a casa oficial. Registo e importação partilham o bloqueio transacional para evitar perdas em registos simultâneos.
+
+O Admin vê contas e membros à espera de conta, procura por número/username/Instagram/nome oficial e guarda correções com intenção explícita. **Sem casa** também é uma correção válida; importações posteriores preservam-na. As alterações ficam registadas em fds_house_changes. Para resolver Ana, confirma a identidade e atribui Casa 9 ao número correto; também podes corrigir o JSON e rever outra importação.
+
+### Classificação e elegibilidade
+
+O ranking Individual mantém TIPS → acertos → taxa de acerto; a casa é informação secundária. Individual / Casas são modos da mesma página. O perfil mostra a casa sem edição pelo participante.
+
+O ranking das casas é calculado no servidor a partir de profiles.balance, sem outro saldo. Usa **a mesma elegibilidade dos bónus manuais**: conta real com acesso FDS, não eliminada/bloqueada e manual_tips_eligible permitido. Admins participantes precisam de manual_tips_eligible=true; contas de organização/testes podem ficar com false. Importar uma casa não altera esta opção automaticamente.
+
+- Regra inicial: **média de TIPS por membro elegível com conta criada**. Pessoas sem conta não entram no denominador nem recebem saldo fictício. O Admin distingue membros oficiais, contas criadas e elegíveis.
+- Admin → Casas → Regra permite mudar explicitamente para **total**.
+- Mostra score, total e membros. Empates de score exato partilham posição, sem desempate oculto. A apresentação arredonda a duas casas decimais; a posição usa a precisão SQL.
+- Casas sem contas elegíveis aparecem sem posição.
+- Apostas, Missões e atribuições Admin afetam automaticamente a classificação. Rankings e detalhes recarregam a cada 30 segundos; a classificação também ao voltar à janela.
+
+### Onboarding e guia
+
+Quatro passos com Começar/Seguinte/Voltar/Saltar. Concluir **ou saltar** grava onboarding_version_seen=1 numa tabela por conta, não em metadados Auth. Outra sessão/dispositivo não volta a forçar a apresentação. Em falha de rede, a pessoa continua e uma fila local por conta repete a gravação destas preferências.
+
+**Como funciona** está no perfil, menu mobile e botão ? da navbar desktop. **Rever apresentação** não reinicia o estado. Mega Boost, Flash e Casas têm ajudas dispensáveis, persistidas independentemente. Não interferem com apostas/recompensas; a mudança obrigatória de password mantém prioridade. Não existe reset global: a versão torna-o desnecessário na V1. O Admin é carregado à parte, apenas quando é aberto.
+
+### Verificação
+
+node tests/admin-scheduling-tips.database.mjs carrega todas as migrações numa base isolada e verifica importação por identificador, conflitos/correções, registo futuro, permissões, média/total/empates, recompensas de Missões e Admin, persistência por conta e regressões de apostas/agendamento. Os testes locais de browser usam dados simulados e verificam completar/saltar/reabrir onboarding, ajudas uma vez, perfil/guia, ranking, revisão antes de importar e mobile sem overflow.
+
+Depois de ativar, testar com conta Admin e conta normal: importar com revisão, confirmar casa pelo número, tentar alterar a própria casa (deve falhar), confirmar média/total após recompensa, saltar onboarding e voltar a entrar, reabrir Como funciona. Os testes locais não substituem a validação nas contas reais.

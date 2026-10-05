@@ -3,7 +3,7 @@ import '../profile.css';
 import { normalizeInstagram } from '../lib/missions';
 import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
 
-export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, passwordRecovery = false, onPasswordChanged }) {
+export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, passwordRecovery = false, onPasswordChanged,houseNumber,onGuide }) {
   const [navHeight, setNavHeight] = useState(72);
   useEffect(() => {
     const nav = document.querySelector('nav');
@@ -121,8 +121,10 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
             <button type="button" onClick={()=>setIsEditingUsername(false)}>Cancelar</button>
           </form> : <div className="profile-name"><h1>{username || user.email.split('@')[0]}</h1><button aria-label="Editar nome de utilizador" onClick={()=>{setTempUsername(username||'');setIsEditingUsername(true);}}>✎</button></div>}
         </section>
+        {isFreshersWeekendEdition&&<section className="profile-house"><span>🏠 A TUA CASA</span><strong>{houseNumber?'Casa '+houseNumber:'Ainda não atribuída.'}</strong><small>Atribuição oficial · pede à organização se precisares de uma correção.</small></section>}
         <section className="profile-balance" aria-label="Saldo disponível"><span className="profile-coins" aria-hidden="true">▱<br/>▱<br/>▱</span><div><p>Saldo disponível</p><strong>{Number(balance).toLocaleString('pt-PT')} <span>TIPS</span></strong></div></section>
         <section className="profile-account"><h2>Conta</h2><div className="profile-settings">
+          {isFreshersWeekendEdition&&<button className="profile-action" aria-label="Como funciona" onClick={onGuide}><span className="profile-action-icon">?</span><span><strong>Como funciona</strong><small>Previsões, missões, TIPS e a tua Casa.</small></span><span className="profile-chevron">›</span></button>}
           <button className="profile-action" aria-expanded={showPasswordInput} aria-controls="profile-password-fields" onClick={()=>setShowPasswordInput(!showPasswordInput)}><span className="profile-action-icon" aria-hidden="true">⚿</span><span><strong>Mudar Password</strong><small>Atualiza a tua palavra-passe de acesso.</small></span><span className="profile-chevron" aria-hidden="true">›</span></button>
           {showPasswordInput && <form id="profile-password-fields" className="profile-password-form" onSubmit={e=>{e.preventDefault();handlePasswordChange();}}>
             <label>Nova password<input required type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={e=>setNewPassword(e.target.value)} /></label>

@@ -13,8 +13,8 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const tabs = ['bets', ...(fdsMode ? ['missions'] : []), 'leaderboard', 'history', ...(isAdmin ? ['admin'] : [])];
-  const tabLabels = { bets: 'Bets', missions: '🔥 Missões', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin' };
+  const tabs = ['bets', ...(fdsMode ? ['missions'] : []), 'leaderboard', 'history', ...(isAdmin ? ['admin'] : []),...(fdsMode ? ['guide'] : [])];
+  const tabLabels = { bets: 'Bets', missions: '🔥 Missões', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin', guide: isMobile ? '❓ Como funciona' : '?'  };
 
   return (
     <nav className={fdsMode ? 'fds-navbar' : undefined} style={{
@@ -50,6 +50,8 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
             {tabs.map(tab => (
               <button
                 key={tab}
+                aria-label={tab==='guide'?'Como funciona':undefined}
+                title={tab==='guide'?'Como funciona':undefined}
                 className={`nav-tab${activeTab === tab ? ' is-active' : ''}`}
                 onClick={() => setActiveTab(tab)}
                 aria-current={activeTab === tab ? 'page' : undefined}

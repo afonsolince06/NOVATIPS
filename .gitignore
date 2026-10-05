@@ -25,3 +25,6 @@ dist-ssr
 
 # Temporary isolated database test dependency
 .tmp/
+
+# Official participant imports contain private identity data
+/private-imports/

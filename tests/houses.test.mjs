@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {summarizeHouseImport,formatHouseScore,houseMetricLabel} from '../src/lib/houses.js';
+test('import review distinguishes accounts, pending signup, ambiguity and conflicts',()=>{assert.deepEqual(summarizeHouseImport([{status:'matched'},{status:'matched'},{status:'pending_account'},{status:'ambiguous'},{status:'unmatched'},{status:'conflict'}]),{matched:2,pending_account:1,ambiguous:1,unmatched:1,conflict:1});});
+test('house score distinguishes no participants from zero TIPS and labels the real mode',()=>{assert.equal(formatHouseScore(null),'—');assert.equal(formatHouseScore(0),'0');assert.equal(houseMetricLabel('average'),'TIPS / MEMBRO');assert.equal(houseMetricLabel('total'),'TIPS TOTAIS');});
