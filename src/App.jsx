@@ -460,7 +460,7 @@ function AppContent() {
         onLoginClick={() => !isFreshersWeekendDemo && setShowLogin(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         balance={balance}
-        activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin}
+        activeTab={activeTab} setActiveTab={tab => { setIsProfileOpen(false); setActiveTab(tab); }} isAdmin={isAdmin}
         hideLogin={isFreshersWeekendDemo}
         fdsMode={isFreshersWeekendEdition}
         notifSubscribed={notifSubscribed}
