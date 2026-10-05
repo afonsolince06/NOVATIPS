@@ -46,6 +46,7 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password) => {
     const { data, error } = await supabase.auth.signUp({ email: normalizeEmail(email), password });
     if (error) {
+      if (error.code === 'user_already_exists' || /already registered|already exists/i.test(error.message)) return { accountExists: true };
       if (/database error saving new user/i.test(error.message)) throw new Error('Não foi possível criar a conta. Confirma que o email está na lista do FDS.');
       throw new Error(error.message);
     }

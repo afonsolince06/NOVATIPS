@@ -23,8 +23,14 @@ export default function LoginModal({ onClose }) {
         return;
       }
       const result = await (mode === 'signup' ? signUp(email, password) : signInWithPassword(email, password));
+      if (result?.accountExists) {
+        switchMode('login');
+        setNotice('Já tens conta com este email. Inicia sessão com a tua password habitual.');
+        return;
+      }
       if (result?.requiresEmailConfirmation) {
-        setNotice('Verifica o teu email para confirmar o registo. Se já tens conta, volta a Entrar ou redefine a password.');
+        switchMode('login');
+        setNotice('Se já te registaste com este email, entra com a tua password habitual. Se é o teu primeiro registo, verifica o email de confirmação antes de entrar.');
         return;
       }
       onClose(); // modal is closed automatically if successful
