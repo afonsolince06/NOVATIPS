@@ -1,77 +1,10 @@
 import { useState } from 'react';
-import MegaBoostAdmin from './MegaBoostAdmin';
-import BetCard from './BetCard';
-import { generateOppositeOdds, resolveOptionBOdds } from '../lib/predictionOdds';
-
-function parseClosingDuration(label) {
-  const parts = [...label.matchAll(/(\d+)\s*([dhm])/gi)];
-  const remainder = label.replace(/(\d+)\s*([dhm])/gi, '').replace(/[\s,]+/g, '');
-  if (!parts.length || remainder) return null;
-
-  const durationMs = parts.reduce((total, [, amount, unit]) => {
-    const normalizedUnit = unit.toLowerCase();
-    const multiplier = normalizedUnit === 'd' ? 24 * 60 * 60_000 : normalizedUnit === 'h' ? 60 * 60_000 : 60_000;
-    return total + Number(amount) * multiplier;
-  }, 0);
-  return durationMs > 0 ? durationMs : null;
-}
+import PredictionEditor from './PredictionEditor';
+import '../admin-editor.css';
 
 export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, enableSections = false, sections = [] }) {
 
-  // ── Create Bet form ──────────────────────────────────────────────────────
-  const [form, setForm] = useState({
-    title: '', description: '', closesInLabel: '24h', section: 'general',
-    opt1Label: 'Sim', opt1Odds: '',
-    opt2Label: 'Não', opt2Odds: '',
-    trending: false, featured: false,
-  });
-  const [formError, setFormError] = useState('');
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  // When Sim odds change, auto-fill Não odds
-  const handleOpt1OddsChange = (val) => {
-    set('opt1Odds', val);
-
-  };
-
-  const handleCreate = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    const o1 = parseFloat(form.opt1Odds);
-    const o2 = parseFloat(resolveOptionBOdds(form.opt1Odds, form.opt2Odds));
-    const closingDuration = parseClosingDuration(form.closesInLabel);
-
-    if (!form.opt1Label.trim() || !form.opt2Label.trim()) {
-      setFormError('Both option labels are required.'); return;
-    }
-    if (!o1 || o1 <= 1) {
-      setFormError('Option 1 odds must be greater than 1.'); return;
-    }
-    if (!o2 || o2 <= 1) {
-      setFormError('Option 2 odds must be greater than 1.'); return;
-    }
-    if (!closingDuration) {
-      setFormError('Closing time must look like 24h, 2h 30m, or 3d.'); return;
-    }
-
-    onAddBet({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      closes_in_label: form.closesInLabel,
-      ...(enableSections ? { section: form.section } : {}),
-      closes_at: new Date(Date.now() + closingDuration).toISOString(),
-      trending: form.trending,
-      featured: form.featured,
-      options: [
-        { label: form.opt1Label.trim(), odds: o1 },
-        { label: form.opt2Label.trim(), odds: o2 },
-      ],
-      status: 'open',
-    });
-
-    setForm({ title: '', description: '', closesInLabel: '24h', section: 'general', opt1Label: 'Sim', opt1Odds: '', opt2Label: 'Não', opt2Odds: '', trending: false, featured: false });
-  };
+  const [panel, setPanel] = useState('create');
 
   // ── Resolve Bet section ──────────────────────────────────────────────────
   const [resolvingId, setResolvingId] = useState(null);
@@ -120,14 +53,15 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
     boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
     transition: 'border-color 0.2s',
   };
-  const lbl = { display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="admin-control-center">
+<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],['resolve','✓ Resolver previsões'],...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>setPanel(id)}>{label}</button>)}</nav><div className="admin-workspace">
 
-      {enableSections && <MegaBoostAdmin bets={openBets} sections={sections} onSaved={onMegaBoostSaved} />}
+      {panel === 'create' && <PredictionEditor bets={openBets} sections={sections} fdsMode={enableSections} onAddBet={onAddBet} onSaved={onMegaBoostSaved} />}
 
       {/* ── RESOLVE BETS ── */}
+      {panel === 'resolve' && (
       <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#14532d' }}>✅ Resolve Bets</h2>
         <p style={{ color: '#166534', fontSize: 13, margin: '0 0 20px' }}>Select the winning outcome — winners get TIPS credited automatically.</p>
@@ -177,83 +111,9 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
         })}
       </div>
 
-      {/* ── CREATE BET ── */}
-      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 4px', color: '#1a1a1a' }}>⚙️ Publish New Bet</h2>
-        <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>
-          Os nomes são editáveis. Deixa a odd B vazia para calcular automaticamente ou escreve uma odd para a substituir.
-        </p>
+      )}
 
-        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div><label style={lbl}>Title *</label>
-            <input style={inp} value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Autogolo do Henrique" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-          </div>
-          <div><label style={lbl}>Description</label>
-            <input style={inp} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Short description..." onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-          </div>
-          {enableSections && (
-            <div>
-              <label style={lbl} htmlFor="bet-section">Secção *</label>
-              <select id="bet-section" value={form.section} onChange={e => set('section', e.target.value)} required style={inp}>
-                {sections.map(section => <option key={section.id} value={section.id}>{section.title}</option>)}
-              </select>
-            </div>
-          )}
-          <div><label style={lbl}>Closes In</label>
-            <input style={inp} value={form.closesInLabel} onChange={e => set('closesInLabel', e.target.value)} placeholder="e.g. 24h or 2h 30m" onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-          </div>
-
-          {/* Options — always 2 */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '20px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#1e90ff', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 }}>
-              Options (2 required)
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={lbl}>Opção A — Nome *</label>
-                <input style={inp} value={form.opt1Label} onChange={e => set('opt1Label', e.target.value)} placeholder="Sim" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-              </div>
-              <div>
-                <label style={lbl}>Opção A — Odd *</label>
-                <input style={inp} type="number" step="0.01" min="1.02" value={form.opt1Odds}
-                  onChange={e => handleOpt1OddsChange(e.target.value)} placeholder="e.g. 1.70" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-              </div>
-              <div>
-                <label style={lbl}>Opção B — Nome *</label>
-                <input style={inp} value={form.opt2Label} onChange={e => set('opt2Label', e.target.value)} placeholder="Não" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
-              </div>
-              <div>
-                <label style={lbl}>Opção B — Odd (opcional) <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 500, textTransform: 'none' }}>(automática se vazia)</span></label>
-                <input style={{ ...inp, borderColor: form.opt2Odds ? '#1e90ff' : '#cbd5e1' }}
-                  type="number" step="0.01" min="1.02" value={form.opt2Odds}
-                  onChange={e => set('opt2Odds', e.target.value)} placeholder={generateOppositeOdds(form.opt1Odds) ? `AUTO → ${generateOppositeOdds(form.opt1Odds)}` : 'AUTO'} onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = form.opt2Odds ? '#1e90ff' : '#cbd5e1'} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 20, margin: '8px 0' }}>
-            {[['trending', '📈 Mark as Hot'], ['featured', '★ Feature on top']].map(([key, label]) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: form[key] ? '#1e90ff' : '#64748b', fontWeight: 500 }}>
-                <input type="checkbox" checked={form[key]} onChange={e => set(key, e.target.checked)} style={{ accentColor: '#1e90ff', width: 16, height: 16 }} />
-                {label}
-              </label>
-            ))}
-          </div>
-
-          <div className={enableSections ? 'fds-app' : undefined}><h3 style={{ color: '#334155', marginBottom: 8 }}>Live Preview</h3><BetCard variant={enableSections ? 'fds' : undefined} bet={{ title: form.title || 'Título da previsão', description: form.description, closes_in_label: form.closesInLabel, options: [{ label: form.opt1Label, odds: Number(form.opt1Odds) || 0 }, { label: form.opt2Label, odds: Number(resolveOptionBOdds(form.opt1Odds, form.opt2Odds)) || 0 }] }} onOptionClick={() => {}} /></div>
-          {formError && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#dc2626', fontWeight: 500 }}>
-              ⚠️ {formError}
-            </div>
-          )}
-
-          <button type="submit" style={{ background: '#1e90ff', color: '#fff', fontWeight: 800, fontSize: 15, border: 'none', borderRadius: 12, padding: '14px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(30, 144, 255, 0.2)' }}>
-            Publish Bet 🚀
-          </button>
-        </form>
-      </div>
-
-      {onResetPassword && (
+      {panel === 'access' && onResetPassword && (
         <section style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 24 }}>
           <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#9a3412' }}>
             Redefinir password de um participante
@@ -304,6 +164,6 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
           )}
         </section>
       )}
-    </div>
+    </div></div>
   );
 }

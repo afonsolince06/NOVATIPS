@@ -70,3 +70,8 @@ Executa uma vez `migrations/20261005000400_mega_boost.sql` no projeto FDS. A mig
 No Admin, abre Mega Boost para criar ou selecionar uma previsão existente, carregar imagem, definir título, descrição, Sim/Não, fecho na hora local, badge e odd boosted opcional para Sim. Marca Ativo para destacar. Só existe um ativo; substituir exige confirmação. Depois de haver apostas não podes alterar as opções/odds. Desativar ou expirar retira o destaque mas mantém a previsão no evento interno, histórico e resolução.
 
 Testar com duas contas: criar inativo, ativar, selecionar Sim/Não, colocar aposta, verificar retorno, confirmar bloqueio de edição de odds, substituir outro ativo, desativar, expirar e resolver no painel habitual. Confirmar que participantes não conseguem usar save_mega_boost ou fazer upload.
+
+
+### Editor unificado do Admin
+
+Aplicar `migrations/20261005000700_unified_prediction_editor.sql` depois da 006 no projeto FDS. O Admin usa um único editor Normal/Mega Boost, com pré-visualização e imagem selecionada. `save_prediction` reutiliza `save_mega_boost` e mantém a validação e bloqueio de opções após apostas. Odd B vazia é calculada pela fórmula existente no cliente; cada boost é opcional e independente. Rascunhos ficam apenas no browser, sem publicar e sem guardar ficheiros locais de imagem. A resolução e redefinição de acesso continuam nas respetivas opções do Admin.

@@ -283,17 +283,17 @@ function AppContent() {
     // Validate: must have 2+ options with valid labels and numeric odds
     const rawOpts = newBet.options || [];
     if (!newBet.title?.trim()) {
-      showToast('Bet title is required.', 'error'); return;
+      showToast('Bet title is required.', 'error'); return false;
     }
     if (rawOpts.length < 2) {
-      showToast('A bet must have at least 2 options.', 'error'); return;
+      showToast('A bet must have at least 2 options.', 'error'); return false;
     }
 
     // Force numeric odds (never store "Auto" or empty strings)
     const opts = rawOpts.map(o => ({ label: o.label.trim(), odds: parseFloat(o.odds) }));
 
     if (opts.some(o => !o.label || isNaN(o.odds) || o.odds <= 1)) {
-      showToast('All options need a label and odds greater than 1.', 'error'); return;
+      showToast('All options need a label and odds greater than 1.', 'error'); return false;
     }
 
     const payload = { ...newBet, options: opts };
@@ -301,7 +301,7 @@ function AppContent() {
     console.log('[handleAddBet] Inserting bet:', JSON.stringify(payload, null, 2));
 
     const { error } = await supabase.from('bets').insert([payload]);
-    if (error) { showToast('Error publishing bet: ' + error.message, 'error'); return; }
+    if (error) { showToast('Error publishing bet: ' + error.message, 'error'); return false; }
     await loadBets();
 
     // Send push notification to all subscribers
@@ -317,6 +317,7 @@ function AppContent() {
     }
 
     showToast('Bet published! ✅');
+    return true;
   };
 
   const handleResolveBet = async (betId, winningOption) => {
@@ -699,7 +700,7 @@ function AppContent() {
 
       {/* ── LEADERBOARD TAB ── */}
       {activeTab === 'leaderboard' && (
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
+        <div className="admin-page" style={{ maxWidth: 1440, margin: '0 auto', padding: '24px 24px 60px' }}>
           <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 24, margin: '0 0 24px', letterSpacing: -0.5, color: '#1a1a1a' }}>Global Leaderboard 🏆</h2>
           <Leaderboard />
         </div>
