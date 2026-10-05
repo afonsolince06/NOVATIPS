@@ -43,6 +43,29 @@ body {
   font-weight: 700;
 }
 
+.fds-demo-filters {
+  display: flex;
+  gap: 7px;
+  margin: 15px 0 6px;
+}
+
+.fds-demo-filters button {
+  min-height: 32px;
+  padding: 0 10px;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #dce2e9;
+  border-radius: 6px;
+  font: 700 11px 'Inter', sans-serif;
+  cursor: pointer;
+}
+
+.fds-demo-filters button.is-active {
+  color: #fff;
+  background: #172033;
+  border-color: #172033;
+}
+
 .fds-demo-tabs {
   display: flex;
   gap: 7px;

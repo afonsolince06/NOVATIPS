@@ -21,11 +21,11 @@ function parseClosingDuration(label) {
   return durationMs > 0 ? durationMs : null;
 }
 
-export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword }) {
+export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, enableSections = false, sections = [] }) {
 
   // ── Create Bet form ──────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    title: '', description: '', closesInLabel: '24h',
+    title: '', description: '', closesInLabel: '24h', section: 'general',
     opt1Label: 'Sim', opt1Odds: '',
     opt2Label: 'Não', opt2Odds: '',
     trending: false, featured: false,
@@ -65,6 +65,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
       title: form.title.trim(),
       description: form.description.trim(),
       closes_in_label: form.closesInLabel,
+      ...(enableSections ? { section: form.section } : {}),
       closes_at: new Date(Date.now() + closingDuration).toISOString(),
       trending: form.trending,
       featured: form.featured,
@@ -75,7 +76,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
       status: 'open',
     });
 
-    setForm({ title: '', description: '', closesInLabel: '24h', opt1Label: 'Sim', opt1Odds: '', opt2Label: 'Não', opt2Odds: '', trending: false, featured: false });
+    setForm({ title: '', description: '', closesInLabel: '24h', section: 'general', opt1Label: 'Sim', opt1Odds: '', opt2Label: 'Não', opt2Odds: '', trending: false, featured: false });
   };
 
   // ── Resolve Bet section ──────────────────────────────────────────────────
@@ -193,6 +194,14 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
           <div><label style={lbl}>Description</label>
             <input style={inp} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Short description..." onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
           </div>
+          {enableSections && (
+            <div>
+              <label style={lbl} htmlFor="bet-section">Secção *</label>
+              <select id="bet-section" value={form.section} onChange={e => set('section', e.target.value)} required style={inp}>
+                {sections.map(section => <option key={section.id} value={section.id}>{section.title}</option>)}
+              </select>
+            </div>
+          )}
           <div><label style={lbl}>Closes In</label>
             <input style={inp} value={form.closesInLabel} onChange={e => set('closesInLabel', e.target.value)} placeholder="e.g. 24h or 2h 30m" onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
           </div>

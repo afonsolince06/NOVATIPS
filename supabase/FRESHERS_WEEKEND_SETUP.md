@@ -6,7 +6,7 @@ Esta edição usa o mesmo frontend, mas deve ser publicada como uma aplicação 
 
 1. Cria um projeto Supabase novo para a edição do FDS.
 2. No SQL Editor desse projeto, executa `migrations/20261004000200_freshers_weekend_core.sql` uma vez.
-3. Executa `migrations/20261004000300_admin_password_reset_audit.sql` e `migrations/20261004000400_bet_deadlines.sql`, uma vez cada e por esta ordem. A primeira adiciona auditoria, revogação de sessões e a regra de password nova; a segunda atualiza uma base já criada para usar prazos de fecho reais.
+3. Executa `migrations/20261004000300_admin_password_reset_audit.sql`, `migrations/20261004000400_bet_deadlines.sql` e `migrations/20261005000100_bet_sections.sql`, uma vez cada e por esta ordem. A primeira adiciona auditoria e reset seguro, a segunda prazos de fecho reais e a terceira a categoria de cada aposta.
 4. Antes de permitir registos, adiciona o email do administrador e os emails dos participantes à allowlist. Substitui os exemplos e executa o bloco no SQL Editor:
 
 ```sql
@@ -22,7 +22,7 @@ Confirma também que o provider de email/password está ativo. Se a confirmaçã
 
 Os emails têm de estar em minúsculas. O trigger de autenticação só permite registos de emails `@novaims.unl.pt` que já estejam nesta lista. O primeiro saldo de cada conta é 2.500 TIPS. O campo `is_admin` é a autorização real no servidor para criar, resolver e apagar apostas.
 
-Se já executaste a migration `002` neste projeto, **não a voltes a executar**. Executa apenas `003` e `004` no SQL Editor, por esta ordem, para adicionar as funcionalidades novas sem recriar tabelas.
+Se já executaste as migrations `002`, `003` e `004` neste projeto, **não as voltes a executar**. Executa apenas `005` no SQL Editor para adicionar a categoria das apostas.
 
 Na edição FDS, o separador Admin consulta o papel `is_admin` no Supabase novo; não é preciso alterar a lista de administradores usada pelo site antigo. As funções SQL também validam esse papel no servidor.
 
@@ -54,6 +54,7 @@ A função confirma o JWT, verifica `is_admin` na allowlist no servidor, aceita 
 - Contas, apostas, referrals e saldos desta edição ficam no projeto Supabase novo.
 - O schema cria o ranking sem emails, restringe acesso aos convidados e valida as apostas no servidor.
 - Cada aposta guarda um prazo real. O formulário aceita durações como `24h`, `2h 30m` e `3d`, e o servidor recusa apostas depois do prazo.
+- O formulário Admin permite escolher entre Desenhos Animados, Neon Party, Rally das Casas, Gerais e Especiais. As apostas aparecem agrupadas na secção selecionada.
 - A lista de convidados não é exposta aos outros participantes; gere-a no SQL Editor/Supabase Dashboard.
 - Push notifications são opcionais. Para as ativar, configura a chave VAPID pública e publica a Edge Function de notificações no projeto Supabase novo.
 - `schema.sql` é apenas um índice informativo. Não o executes como script de instalação.

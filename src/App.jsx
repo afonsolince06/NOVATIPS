@@ -349,7 +349,7 @@ function AppContent() {
     return true;
   });
 
-  const visibleDemoSections = FRESHERS_WEEKEND_SECTIONS.filter(section =>
+  const visibleWeekendSections = FRESHERS_WEEKEND_SECTIONS.filter(section =>
     activeDemoSection === 'all' || section.id === activeDemoSection
   );
 
@@ -483,15 +483,28 @@ function AppContent() {
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 60px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {/* Bets */}
             <div style={{ flex: 1, minWidth: 'min(100%, 600px)' }}>
-              {isFreshersWeekendDemo ? (
+              {isFreshersWeekendEdition ? (
                 <div className="fds-demo">
                   <div className="fds-demo-intro">
                     <div>
-                      <span className="fds-demo-kicker">ACTIVE BETS · DEMO VISUAL</span>
+                      <span className="fds-demo-kicker">{isFreshersWeekendDemo ? 'ACTIVE BETS · DEMO VISUAL' : 'APOSTAS ATIVAS · FDS DO CALOIRO'}</span>
                       <h2>Escolhe o ambiente</h2>
                     </div>
                     <span className="fds-demo-total">{filteredBets.length} previsões</span>
                   </div>
+                  {!isFreshersWeekendDemo && (
+                    <div className="fds-demo-filters" aria-label="Filtrar apostas">
+                      {['All', 'Hot', 'Closing'].map(option => (
+                        <button
+                          type="button"
+                          key={option}
+                          className={filter === option ? 'is-active' : ''}
+                          aria-pressed={filter === option}
+                          onClick={() => setFilter(option)}
+                        >{option === 'Hot' ? '🔥 Hot' : option === 'Closing' ? '⏰ A fechar' : 'Todas'}</button>
+                      ))}
+                    </div>
+                  )}
                   <div className="fds-demo-tabs" role="tablist" aria-label="Secções de apostas">
                     <button
                       type="button"
@@ -514,11 +527,11 @@ function AppContent() {
                       );
                     })}
                   </div>
-                  <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>
+                  {isFreshersWeekendDemo && <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>}
 
                   <div className="fds-demo-sections">
-                    {visibleDemoSections.map(section => {
-                      const sectionBets = filteredBets.filter(bet => bet.section === section.id);
+                    {visibleWeekendSections.map(section => {
+                      const sectionBets = filteredBets.filter(bet => (bet.section || 'general') === section.id);
                       if (!sectionBets.length) return null;
                       return (
                         <section className={`fds-demo-section theme-${section.theme}`} key={section.id}>
@@ -535,15 +548,23 @@ function AppContent() {
                             </div>
                           </div>
                           <div className="fds-demo-bets">
-                            {sectionBets.map(bet => (
-                              <BetCard key={bet.id} bet={bet} onOptionClick={handleOptionClick} />
-                            ))}
+                            {sectionBets.map(bet => {
+                              const selectedItem = betSlip.find(item => item.bet.id === bet.id);
+                              return (
+                                <BetCard
+                                  key={bet.id}
+                                  bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }}
+                                  onOptionClick={handleOptionClick}
+                                  selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
+                                />
+                              );
+                            })}
                           </div>
                         </section>
                       );
                     })}
-                    {visibleDemoSections.every(section => !filteredBets.some(bet => bet.section === section.id)) && (
-                      <div className="fds-demo-empty">Sem apostas nesta secção com o filtro atual.</div>
+                    {visibleWeekendSections.every(section => !filteredBets.some(bet => (bet.section || 'general') === section.id)) && (
+                      <div className="fds-demo-empty">{isFreshersWeekendDemo ? 'Sem apostas nesta secção com o filtro atual.' : 'Ainda não há apostas nesta secção.'}</div>
                     )}
                   </div>
                 </div>
@@ -662,6 +683,8 @@ function AppContent() {
             onResolveBet={handleResolveBet}
             onDeleteBet={handleDeleteBet}
             onResetPassword={isFreshersWeekendEdition ? handleAdminPasswordReset : null}
+            enableSections={isFreshersWeekendEdition}
+            sections={FRESHERS_WEEKEND_SECTIONS}
           />
         </div>
       )}
