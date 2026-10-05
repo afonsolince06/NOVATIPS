@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import BetCard from './BetCard';
+import { generateOppositeOdds, resolveOptionBOdds } from '../lib/predictionOdds';
 
 const empty = { enabled: true, active: false, title: '', description: '', section: 'general', yes_label: 'Sim', no_label: 'Não', yes_odds: '', no_odds: '', boosted_odds: '', boosted_no_odds: '', closes_at: '', badge: '', image_path: '' };
 const localDate = value => { const d = new Date(value); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16); };
@@ -38,7 +40,7 @@ export default function MegaBoostAdmin({ bets, sections, onSaved }) {
        set('image_path', imagePath);
        setFile(null);
      }
-     const { error: saveError } = await supabase.rpc('save_mega_boost', { p_bet_id: id || null, p_payload: { ...form, no_odds: form.no_label.trim() ? form.no_odds : '', boosted_no_odds: form.no_label.trim() ? form.boosted_no_odds : '', image_path: imagePath, closes_at: new Date(form.closes_at).toISOString() }, p_replace_id: other?.id || null });
+     const { error: saveError } = await supabase.rpc('save_mega_boost', { p_bet_id: id || null, p_payload: { ...form, no_odds: form.no_label.trim() ? resolveOptionBOdds(form.yes_odds, form.no_odds) : '', boosted_no_odds: form.no_label.trim() ? form.boosted_no_odds : '', image_path: imagePath, closes_at: new Date(form.closes_at).toISOString() }, p_replace_id: other?.id || null });
      if (saveError) throw saveError;
      uploaded = null;
      setFile(null); setId(''); setForm(empty); setNotice('Mega Boost guardado.');
@@ -62,15 +64,16 @@ export default function MegaBoostAdmin({ bets, sections, onSaved }) {
      <label>Imagem / banner (JPG, PNG, WebP · máximo 5 MB)<input key={id + form.image_path} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} /></label>
      {imageUrl && <img className="mega-admin-preview" src={imageUrl} alt="Banner atual" />}
      <div className="mega-admin-grid">
-       <label>Nome da opção 1<input required value={form.yes_label} onChange={e => set('yes_label',e.target.value)} /></label>
-       <label>Nome da opção 2 (opcional)<input value={form.no_label} onChange={e => set('no_label',e.target.value)} /></label>
-       <label>Odd base — opção 1<input required type="number" min="1.01" step="0.01" value={form.yes_odds} onChange={e => set('yes_odds',e.target.value)} /></label>
-       <label>Odd base — opção 2<input required={Boolean(form.no_label.trim())} disabled={!form.no_label.trim()} type="number" min="1.01" step="0.01" value={form.no_odds} onChange={e => set('no_odds',e.target.value)} /></label>
-       <label>Odd boosted — opção 1 (opcional)<input type="number" min="1.01" step="0.01" value={form.boosted_odds} onChange={e => set('boosted_odds',e.target.value)} /></label>
-       <label>Odd boosted — opção 2 (opcional)<input disabled={!form.no_label.trim()} type="number" min="1.01" step="0.01" value={form.boosted_no_odds} onChange={e => set('boosted_no_odds',e.target.value)} /></label>
+       <label>Opção A — Nome<input required value={form.yes_label} onChange={e => set('yes_label',e.target.value)} /></label>
+       <label>Opção B — Nome (opcional)<input value={form.no_label} onChange={e => set('no_label',e.target.value)} /></label>
+       <label>Opção A — Odd base<input required type="number" min="1.01" step="0.01" value={form.yes_odds} onChange={e => set('yes_odds',e.target.value)} /></label>
+       <label>Opção B — Odd base (opcional)<input placeholder={generateOppositeOdds(form.yes_odds) ? `AUTO → ${generateOppositeOdds(form.yes_odds)}` : 'AUTO'} disabled={!form.no_label.trim()} type="number" min="1.01" step="0.01" value={form.no_odds} onChange={e => set('no_odds',e.target.value)} /></label>
+       <label>Opção A — Odd boosted (opcional)<input type="number" min="1.01" step="0.01" value={form.boosted_odds} onChange={e => set('boosted_odds',e.target.value)} /></label>
+       <label>Opção B — Odd boosted (opcional)<input disabled={!form.no_label.trim()} type="number" min="1.01" step="0.01" value={form.boosted_no_odds} onChange={e => set('boosted_no_odds',e.target.value)} /></label>
        <label>Data/hora de fecho (hora local)<input required type="datetime-local" value={form.closes_at} onChange={e => set('closes_at',e.target.value)} /></label>
      </div>
      <label>Badge personalizado (opcional)<input maxLength={80} value={form.badge} onChange={e => set('badge',e.target.value)} /></label>
+     <div className="fds-app"><h3>Live Preview</h3><BetCard variant="fds" bet={{ title: form.title || 'Título do Mega Boost', description: form.description, closes_at: form.closes_at ? new Date(form.closes_at).toISOString() : undefined, options: [{ label: form.yes_label, odds: Number(form.boosted_odds || form.yes_odds) || 0 }, ...(form.no_label.trim() ? [{ label: form.no_label, odds: Number(form.boosted_no_odds || resolveOptionBOdds(form.yes_odds, form.no_odds)) || 0 }] : [])] }} onOptionClick={() => {}} /></div>
      {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
      <button disabled={busy} type="submit">{busy ? 'A guardar…' : 'Guardar previsão / Mega Boost'}</button>
    </form>

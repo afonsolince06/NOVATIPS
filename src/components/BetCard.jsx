@@ -137,7 +137,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel, varia
       {/* Odds buttons */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {opts.map((opt, i) => {
-          const isNo = opt.label.toLowerCase().trim() === 'não' || opt.label.toLowerCase().trim() === 'nao';
+          const isNo = i === 1;
           const isSelected = selectedOptionLabel === opt.label;
           
           return (

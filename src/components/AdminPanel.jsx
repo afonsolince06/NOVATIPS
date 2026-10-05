@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import MegaBoostAdmin from './MegaBoostAdmin';
-
-// Auto-generates a fair opposite odd with a small house margin.
-// e.g. Sim @ 1.70 → Não @ ~2.23
-function generateOppositeOdds(simOdds) {
-  const o = parseFloat(simOdds);
-  if (!o || o <= 1.01) return '';
-  return (Math.round((o / (o - 1)) * 0.92 * 100) / 100).toFixed(2);
-}
+import BetCard from './BetCard';
+import { generateOppositeOdds, resolveOptionBOdds } from '../lib/predictionOdds';
 
 function parseClosingDuration(label) {
   const parts = [...label.matchAll(/(\d+)\s*([dhm])/gi)];
@@ -37,8 +31,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
   // When Sim odds change, auto-fill Não odds
   const handleOpt1OddsChange = (val) => {
     set('opt1Odds', val);
-    const autoOdds = generateOppositeOdds(val);
-    if (autoOdds) set('opt2Odds', autoOdds);
+
   };
 
   const handleCreate = (e) => {
@@ -46,7 +39,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
     setFormError('');
 
     const o1 = parseFloat(form.opt1Odds);
-    const o2 = parseFloat(form.opt2Odds);
+    const o2 = parseFloat(resolveOptionBOdds(form.opt1Odds, form.opt2Odds));
     const closingDuration = parseClosingDuration(form.closesInLabel);
 
     if (!form.opt1Label.trim() || !form.opt2Label.trim()) {
@@ -188,7 +181,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 4px', color: '#1a1a1a' }}>⚙️ Publish New Bet</h2>
         <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>
-          Enter Option 1 odds — Option 2 ("Não") is calculated automatically. You can override it.
+          Os nomes são editáveis. Deixa a odd B vazia para calcular automaticamente ou escreve uma odd para a substituir.
         </p>
 
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -217,23 +210,23 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={lbl}>Option 1 Label *</label>
+                <label style={lbl}>Opção A — Nome *</label>
                 <input style={inp} value={form.opt1Label} onChange={e => set('opt1Label', e.target.value)} placeholder="Sim" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
               </div>
               <div>
-                <label style={lbl}>Option 1 Odds *</label>
+                <label style={lbl}>Opção A — Odd *</label>
                 <input style={inp} type="number" step="0.01" min="1.02" value={form.opt1Odds}
                   onChange={e => handleOpt1OddsChange(e.target.value)} placeholder="e.g. 1.70" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
               </div>
               <div>
-                <label style={lbl}>Option 2 Label *</label>
+                <label style={lbl}>Opção B — Nome *</label>
                 <input style={inp} value={form.opt2Label} onChange={e => set('opt2Label', e.target.value)} placeholder="Não" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = '#cbd5e1'} />
               </div>
               <div>
-                <label style={lbl}>Option 2 Odds * <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 500, textTransform: 'none' }}>(auto-filled)</span></label>
+                <label style={lbl}>Opção B — Odd (opcional) <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 500, textTransform: 'none' }}>(automática se vazia)</span></label>
                 <input style={{ ...inp, borderColor: form.opt2Odds ? '#1e90ff' : '#cbd5e1' }}
                   type="number" step="0.01" min="1.02" value={form.opt2Odds}
-                  onChange={e => set('opt2Odds', e.target.value)} placeholder="Auto" required onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = form.opt2Odds ? '#1e90ff' : '#cbd5e1'} />
+                  onChange={e => set('opt2Odds', e.target.value)} placeholder={generateOppositeOdds(form.opt1Odds) ? `AUTO → ${generateOppositeOdds(form.opt1Odds)}` : 'AUTO'} onFocus={e => e.target.style.borderColor = '#1e90ff'} onBlur={e => e.target.style.borderColor = form.opt2Odds ? '#1e90ff' : '#cbd5e1'} />
               </div>
             </div>
           </div>
@@ -247,6 +240,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
             ))}
           </div>
 
+          <div className={enableSections ? 'fds-app' : undefined}><h3 style={{ color: '#334155', marginBottom: 8 }}>Live Preview</h3><BetCard variant={enableSections ? 'fds' : undefined} bet={{ title: form.title || 'Título da previsão', description: form.description, closes_in_label: form.closesInLabel, options: [{ label: form.opt1Label, odds: Number(form.opt1Odds) || 0 }, { label: form.opt2Label, odds: Number(resolveOptionBOdds(form.opt1Odds, form.opt2Odds)) || 0 }] }} onOptionClick={() => {}} /></div>
           {formError && (
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#dc2626', fontWeight: 500 }}>
               ⚠️ {formError}
