@@ -9,6 +9,7 @@ import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
 import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
+import Missions from './components/Missions';
 import FdsSidebar from './components/FdsSidebar';
 import MegaBoost from './components/MegaBoost';
 import { findActiveMegaBoost } from './lib/megaBoost';
@@ -167,19 +168,22 @@ function AppContent() {
     return () => { active = false; };
   }, [user]);
 
-  // Reload my bets & profile when switching to history tab
+  // Refresh the shared balance on navigation and while missions can award TIPS.
   useEffect(() => {
-    if (activeTab !== 'history' || !user) return;
+    if (!user) return;
     let active = true;
-    fetchMyBets().then(data => { if (active) setMyBets(data); });
-    fetchProfile().then(data => {
+    if (activeTab === 'history') fetchMyBets().then(data => { if (active) setMyBets(data); });
+    const refresh = () => fetchProfile().then(data => {
       if (active && data) {
         setBalance(data.balance);
         setLastClaim(data.last_claim_at);
         setUsername(data.username);
       }
     });
-    return () => { active = false; };
+    refresh();
+    const timer = isFreshersWeekendEdition ? setInterval(refresh, 30000) : null;
+    window.addEventListener('focus', refresh);
+    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [activeTab, user, fetchMyBets, fetchProfile]);
 
   // Supabase Realtime — show in-app toast when a new bet is published
@@ -705,6 +709,8 @@ function AppContent() {
         </div>
       )}
 
+      {activeTab === 'missions' && isFreshersWeekendEdition && <Missions key={user?.id || 'guest'} user={user} onLogin={() => setShowLogin(true)} onBalanceRefresh={loadProfile} />}
+
       {/* ── MY BETS TAB ── */}
       {activeTab === 'history' && (
         <div className="history-page-background"><div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
@@ -720,11 +726,12 @@ function AppContent() {
 
       {/* ── ADMIN TAB ── */}
       {activeTab === 'admin' && isAdmin && (
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 24px 60px' }}>
           <AdminPanel
             openBets={bets}
             onAddBet={handleAddBet}
             onMegaBoostSaved={loadBets}
+            onMissionReward={loadProfile}
             onResolveBet={handleResolveBet}
             onDeleteBet={handleDeleteBet}
             onResetPassword={isFreshersWeekendEdition ? handleAdminPasswordReset : null}

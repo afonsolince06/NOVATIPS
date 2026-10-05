@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import '../profile.css';
-import { supabase } from '../lib/supabase';
+import { normalizeInstagram } from '../lib/missions';
+import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
 
 export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, passwordRecovery = false, onPasswordChanged }) {
   const [navHeight, setNavHeight] = useState(72);
@@ -13,6 +14,21 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
     observer.observe(nav);
     return () => observer.disconnect();
   }, []);
+  const [instagram, setInstagram] = useState('');
+  const [instagramNotice, setInstagramNotice] = useState('');
+  const [instagramBusy, setInstagramBusy] = useState(false);
+  useEffect(() => { let active = true; if (isFreshersWeekendEdition) supabase.rpc('my_instagram').then(({data,error}) => { if(active && !error) setInstagram(data || ''); }); return () => {active=false;}; }, [user?.id]);
+  const saveInstagram = async event => {
+    event.preventDefault(); if (instagramBusy) return;
+    setInstagramBusy(true); setInstagramNotice('');
+    try {
+      const canonical = normalizeInstagram(instagram);
+      const {error} = await supabase.rpc('update_my_instagram', {p_username:canonical});
+      if (error) throw error;
+      setInstagram(canonical); setInstagramNotice('Instagram guardado.');
+    } catch (error) { setInstagramNotice(error.message); }
+    finally { setInstagramBusy(false); }
+  };
   const initial = (username || user?.email)?.[0]?.toUpperCase() ?? '?';
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -115,6 +131,7 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
           </form>}
           <a className="profile-action" href="https://www.instagram.com/novatips_?igsh=MXNoa3pwd2NpMWhteA==" target="_blank" rel="noopener noreferrer"><span className="profile-action-icon" aria-hidden="true">◎</span><span><strong>Segue-nos no Instagram</strong><small>Fica a par de todas as novidades do FDS.</small></span><span className="profile-chevron" aria-hidden="true">›</span></a>
         </div></section>
+        {isFreshersWeekendEdition && <section className="profile-instagram"><h2>Instagram <small>(opcional)</small></h2><p>Ajuda-nos a identificar as tuas participações nas Missões FDS.</p><form onSubmit={saveInstagram}><label htmlFor="instagram-handle">Nome no Instagram</label><input id="instagram-handle" value={instagram} onChange={e=>setInstagram(e.target.value)} placeholder="@username" /><button disabled={instagramBusy} className="profile-primary">{instagramBusy ? 'A guardar…' : 'Guardar'}</button></form>{instagramNotice && <p role="status">{instagramNotice}</p>}</section>}
         <button className="profile-signout" onClick={onSignOut}>⇥ &nbsp; Terminar Sessão</button>
       </div>
     </div>

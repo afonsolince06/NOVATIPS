@@ -13,8 +13,8 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const tabs = ['bets', 'leaderboard', 'history', ...(isAdmin ? ['admin'] : [])];
-  const tabLabels = { bets: 'Bets', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin' };
+  const tabs = ['bets', ...(fdsMode ? ['missions'] : []), 'leaderboard', 'history', ...(isAdmin ? ['admin'] : [])];
+  const tabLabels = { bets: 'Bets', missions: '🔥 Missões', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin' };
 
   return (
     <nav className={fdsMode ? 'fds-navbar' : undefined} style={{

@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import MissionsAdmin from './MissionsAdmin';
 import PredictionEditor from './PredictionEditor';
 import '../admin-editor.css';
 
-export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, enableSections = false, sections = [] }) {
+export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, onMissionReward, enableSections = false, sections = [] }) {
 
   const [panel, setPanel] = useState('create');
 
@@ -56,9 +57,11 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
   return (
     <div className="admin-control-center">
-<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],['resolve','✓ Resolver previsões'],...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>setPanel(id)}>{label}</button>)}</nav><div className="admin-workspace">
+<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],['resolve','✓ Resolver previsões'],...(enableSections ? [['missions','🔥 Missões']] : []),...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>setPanel(id)}>{label}</button>)}</nav><div className="admin-workspace">
 
       {panel === 'create' && <PredictionEditor bets={openBets} sections={sections} fdsMode={enableSections} onAddBet={onAddBet} onSaved={onMegaBoostSaved} />}
+
+      {panel === 'missions' && <MissionsAdmin onBalanceRefresh={onMissionReward} />}
 
       {/* ── RESOLVE BETS ── */}
       {panel === 'resolve' && (

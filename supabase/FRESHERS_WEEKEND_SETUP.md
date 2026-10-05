@@ -75,3 +75,30 @@ Testar com duas contas: criar inativo, ativar, selecionar Sim/Não, colocar apos
 ### Editor unificado do Admin
 
 Aplicar `migrations/20261005000700_unified_prediction_editor.sql` depois da 006 no projeto FDS. O Admin usa um único editor Normal/Mega Boost, com pré-visualização e imagem selecionada. `save_prediction` reutiliza `save_mega_boost` e mantém a validação e bloqueio de opções após apostas. Odd B vazia é calculada pela fórmula existente no cliente; cada boost é opcional e independente. Rascunhos ficam apenas no browser, sem publicar e sem guardar ficheiros locais de imagem. A resolução e redefinição de acesso continuam nas respetivas opções do Admin.
+
+## Missões FDS — ativação
+
+Executa uma vez a migration `migrations/20261005000900_fds_missions.sql` no SQL Editor do **projeto Supabase FDS**, depois da 008. Reutiliza o bucket `prediction-images` da 004. Não altera autenticação, apostas, odds ou funções de resolução. Não cria missões nem participantes de demonstração.
+
+- Navbar → Missões: desafios, filtros, destaque/Flash, detalhe, countdown e histórico pessoal.
+- Admin → Missões: criar/editar, rascunhar, agendar, publicar, pausar, fechar, concluir, carregar banner e gerir participações. O Flash abre com 30 minutos, Race e 5 premiados; tudo é editável.
+- Perfil: Instagram opcional, guardado como handle sem @ nem URL; pesquisa administrativa por nome, número de aluno ou Instagram.
+- Normal: cada aprovação confirmada paga a recompensa. Race: as primeiras X aprovações confirmadas recebem; a ordem de aprovação define as vagas. Competição: validar participação não paga; fecha a missão e escolhe os vencedores para pagar.
+- Novas participações só podem ser registadas durante o período ativo. Provas são recebidas fora do site. Participações registadas a tempo podem ser revistas após o fecho. Pausar ou concluir bloqueia a revisão.
+- Os horários são introduzidos na hora local e enviados como timestamps UTC. O servidor valida início/fim; o countdown e os estados públicos atualizam sem cron jobs.
+
+As recompensas atualizam **profiles.balance**, com bloqueio transacional e registo auditável em `fds_mission_rewards` (tipo MISSION_REWARD, missão, participante, admin, montante e saldo antes/depois). Uma participação por pessoa/missão e uma recompensa por participação. Falhas no registo de auditoria anulam também o crédito. RLS permite aos participantes ver apenas as suas participações/recompensas; funções de escrita verificam o papel Admin no servidor.
+
+O saldo é atualizado após operações do Admin e ao mudar de separador. Durante a sessão FDS, saldo e leaderboard também recarregam a cada 30 segundos e ao regressar à janela. Não é necessária uma nova publicação Realtime.
+
+### Validação antes de partilhar
+
+1. Cria Normal +200; regista uma conta de teste, aprova e confirma o saldo +200 no perfil/leaderboard. Tentar aprovar de novo deve ser bloqueado.
+2. Cria Race com 3 vagas; regista 4 participantes antes do fecho. Só os primeiros 3 aprovados recebem.
+3. Cria Competição com 1 vencedor; valida duas participações sem alteração de saldo. Fecha, seleciona um vencedor e confirma; só este recebe.
+4. Lança Flash; verifica destaque e countdown. Após o fim, adicionar participantes deve falhar.
+5. Agenda uma missão; antes do início não aceita participantes, depois aceita automaticamente.
+6. Guarda @username no Perfil e procura o utilizador por esse handle no Admin.
+7. Testa criar/apostar/resolver uma previsão normal, Mega Boost, My Bets e logout/login, com duas contas reais no FDS.
+
+Testes automáticos locais: `node --test tests/*.test.mjs`. Para testar SQL numa base PostgreSQL isolada, sem tocar no Supabase: `npm install --prefix .tmp/mission-sql --no-save --no-package-lock @electric-sql/pglite`, seguido de `node tests/missions.database.mjs`. O teste cria apenas fixtures na memória e fecha a base no fim.
