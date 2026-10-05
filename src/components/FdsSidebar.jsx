@@ -20,9 +20,12 @@ export default function FdsSidebar({ user, balance, username, myBets, canClaim, 
       .from('event_leaderboard')
       .select('*')
       .order('balance', { ascending: false })
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (active && !error && data) {
-          const ranked = rankLeaderboard(data);
+          const {data:stats,error:statsError}=await supabase.rpc('event_prediction_statistics');
+          if (!active || statsError) return;
+          const byId=new Map(stats.map(s=>[s.user_id,s]));
+          const ranked = rankLeaderboard(data.map(u=>({...u,...byId.get(u.id)})));
           setLeaders(ranked.slice(0, 3));
           const ownRank = ranked.find(entry => entry.id === user.id)?.rank;
           setRank(ownRank || null);
