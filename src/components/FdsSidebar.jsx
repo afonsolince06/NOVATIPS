@@ -7,7 +7,7 @@ const DEMO_LEADERS = [
   { username: 'pedro.fds', balance: 7540 },
 ];
 
-export default function FdsSidebar({ user, balance, myBets, canClaim, onClaim, onViewLeaderboard, isDemo }) {
+export default function FdsSidebar({ user, balance, username, myBets, canClaim, onClaim, onViewLeaderboard, isDemo }) {
   const [leaders, setLeaders] = useState(isDemo ? DEMO_LEADERS : []);
   const [rank, setRank] = useState(null);
   const wins = myBets.filter(bet => bet.status === 'Won').length;
@@ -17,7 +17,7 @@ export default function FdsSidebar({ user, balance, myBets, canClaim, onClaim, o
     let active = true;
     supabase
       .from('event_leaderboard')
-      .select('id, username, balance')
+      .select('*')
       .order('balance', { ascending: false })
       .then(({ data, error }) => {
         if (active && !error && data) {
@@ -27,7 +27,7 @@ export default function FdsSidebar({ user, balance, myBets, canClaim, onClaim, o
         }
       });
     return () => { active = false; };
-  }, [isDemo, user, balance]);
+  }, [isDemo, user, balance, username]);
 
   return (
     <aside className="fds-sidebar">
@@ -70,8 +70,8 @@ export default function FdsSidebar({ user, balance, myBets, canClaim, onClaim, o
             {leaders.map((entry, index) => (
               <li key={entry.username || index}>
                 <span className={`fds-rank rank-${index + 1}`}>{index + 1}</span>
-                <span className="fds-leader-avatar">{(entry.username?.[0] || '?').toUpperCase()}</span>
-                <span className="fds-leader-name">{entry.username || 'Caloiro'}</span>
+                <span className="fds-leader-avatar">{(entry.username?.[0] || entry.student_number?.[0] || '?').toUpperCase()}</span>
+                <span className="fds-leader-name">{entry.username || entry.student_number || 'Caloiro'}</span>
                 <strong>{Number(entry.balance || 0).toLocaleString('pt-PT')}</strong>
               </li>
             ))}

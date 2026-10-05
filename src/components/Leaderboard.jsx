@@ -9,7 +9,7 @@ export default function Leaderboard() {
 
   useEffect(() => {
     const source = isFreshersWeekendEdition ? 'event_leaderboard' : 'profiles';
-    const columns = isFreshersWeekendEdition ? 'balance, username' : 'email, balance, username';
+    const columns = isFreshersWeekendEdition ? '*' : 'email, balance, username';
 
     supabase
       .from(source)
@@ -19,9 +19,9 @@ export default function Leaderboard() {
       .then(({ data }) => {
         if (data) setEntries(data.map((u, i) => ({
           rank: i + 1,
-          name: u.username || (!isFreshersWeekendEdition ? u.email?.split('@')[0] : null) || 'anon',
+          name: u.username || u.student_number || (!isFreshersWeekendEdition ? u.email?.split('@')[0] : null) || 'anon',
           tips: u.balance,
-          avatar: (u.username?.[0] || (!isFreshersWeekendEdition ? u.email?.[0] : null) || '?').toUpperCase(),
+          avatar: (u.username?.[0] || u.student_number?.[0] || (!isFreshersWeekendEdition ? u.email?.[0] : null) || '?').toUpperCase(),
         })));
       });
   }, []);

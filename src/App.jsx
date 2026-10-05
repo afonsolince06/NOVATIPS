@@ -649,6 +649,7 @@ function AppContent() {
             <div className={isFreshersWeekendEdition ? 'fds-sidebar-column' : undefined} style={{ width: isFreshersWeekendEdition ? undefined : 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
               {isFreshersWeekendEdition ? (
                 <FdsSidebar
+                  username={username}
                   user={user}
                   balance={balance}
                   myBets={myBets}
