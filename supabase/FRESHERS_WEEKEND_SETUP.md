@@ -174,9 +174,13 @@ O PDF e as imagens têm **105 participantes e 18 casas**, incluindo Casa 14. O f
 - Ana Marroquin → Casa 9 permanece por confirmar: o PDF repete Marroquin nos dois campos, com candidato 20261266. Não é atribuída automaticamente.
 - Os restantes nomes foram comparados exatamente após normalizar acentos, apóstrofos e espaços. Não houve aproximação por nome parecido.
 
-Em **Admin → Casas**, carrega o JSON, escolhe **Pré-visualizar** e revê antes de **Confirmar importação das correspondências seguras**. O servidor usa o número de aluno. Duplicados, conflitos e nomes por resolver ficam de fora. Repetir a mesma confirmação não duplica atribuições. Se as casas mudarem entre revisão e confirmação, é necessário rever novamente.
+Para preencher a lista inicial diretamente, executa o ficheiro privado **private-imports/seed-fds-houses.sql** no SQL Editor FDS depois da migração 012. Insere as 104 correspondências confirmadas em fds_house_roster e liga contas existentes pelo número; contas futuras recebem a atribuição ao registar. Pode ser repetido, preserva conflitos e correções manuais e não altera contas/TIPS. O resumo final mostra atribuições aceites e conflitos preservados. A auditoria identifica este bootstrap SQL com UUID zero e source=official_sql_seed, sem o atribuir a uma pessoa. Atualiza a página depois do Run. Não publiques este ficheiro com os dados pessoais.
+
+A importação JSON é uma alternativa para listas novas, na secção recolhida **Atualizar lista oficial (avançado)**. Não é necessária para guardar correções. Em **Admin → Casas**, carrega o JSON, escolhe **Pré-visualizar** e revê antes de **Confirmar importação das correspondências seguras**. O servidor usa o número de aluno. Duplicados, conflitos e nomes por resolver ficam de fora. Repetir a mesma confirmação não duplica atribuições. Se as casas mudarem entre revisão e confirmação, é necessário rever novamente.
 
 A importação não cria contas, não altera a allowlist e não atribui TIPS. Pessoas sem conta ficam como **Sem conta**, com a atribuição guardada no roster; ao registarem-se com o email institucional autorizado, recebem a casa oficial. Registo e importação partilham o bloqueio transacional para evitar perdas em registos simultâneos.
+
+**Alterar casa** abre uma janela com seleção, Cancelar e Guardar casa; a confirmação aparece junto ao utilizador. A gravação usa admin_set_user_house no Supabase.
 
 O Admin vê contas e membros à espera de conta, procura por número/username/Instagram/nome oficial e guarda correções com intenção explícita. **Sem casa** também é uma correção válida; importações posteriores preservam-na. As alterações ficam registadas em fds_house_changes. Para resolver Ana, confirma a identidade e atribui Casa 9 ao número correto; também podes corrigir o JSON e rever outra importação.
 
