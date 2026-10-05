@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
 
-export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut }) {
+export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, onPasswordChanged }) {
   const initial = (username || user?.email)?.[0]?.toUpperCase() ?? '?';
   const [promoCode, setPromoCode] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
   
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -24,22 +25,31 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
   };
 
   const handlePasswordChange = async () => {
-    if (newPassword.length < 6) {
-      alert('A password deve ter pelo menos 6 caracteres.');
+    if (newPassword.length < 8) {
+      alert('A password deve ter pelo menos 8 caracteres.');
       return;
     }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (newPassword !== confirmPassword) {
+      alert('As passwords não coincidem.');
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      data: { ...user.user_metadata, force_password_change: false },
+    });
     if (error) {
       alert('Erro ao mudar password: ' + error.message);
     } else {
       alert('Password atualizada com sucesso! 🔐');
       setNewPassword('');
+      setConfirmPassword('');
       setShowPasswordInput(false);
+      onPasswordChanged?.();
     }
   };
 
   const handleInvite = () => {
-    navigator.clipboard.writeText('https://novatips.vercel.app/?ref=' + user.id);
+    navigator.clipboard.writeText(`${window.location.origin}/?ref=${user.id}`);
     alert('Link de convite copiado! Ganhas 500 TIPS por cada amigo que se registar.');
   };
 
@@ -52,6 +62,42 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
       alert('Código inválido ou expirado.');
     }
   };
+
+  if (forcePasswordChange) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: '#f8fafc', display: 'grid', placeItems: 'center', padding: 20 }}>
+        <section style={{ width: '100%', maxWidth: 440, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 28 }}>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, color: '#1a1a1a', margin: '0 0 10px' }}>Cria a tua nova password</h2>
+          <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>
+            A password temporária já não pode ser usada depois deste passo. Escolhe uma password nova para continuares.
+          </p>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Nova password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            value={newPassword}
+            onChange={event => setNewPassword(event.target.value)}
+            style={{ width: '100%', boxSizing: 'border-box', padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 14 }}
+          />
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Confirmar password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            value={confirmPassword}
+            onChange={event => setConfirmPassword(event.target.value)}
+            style={{ width: '100%', boxSizing: 'border-box', padding: 12, border: '1px solid #cbd5e1', borderRadius: 8, marginBottom: 18 }}
+          />
+          <button
+            type="button"
+            onClick={handlePasswordChange}
+            style={{ width: '100%', padding: 13, background: '#15803d', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+          >Guardar nova password</button>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -124,7 +170,7 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
         
         <div style={{ background: '#ffffff', borderRadius: 20, padding: '8px 0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
           {/* Código Promocional */}
-          <div 
+          {!isFreshersWeekendEdition && <div
             onClick={() => setShowPromoInput(!showPromoInput)}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
           >
@@ -133,10 +179,10 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
               <span style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>Código promocional</span>
             </div>
             <span style={{ color: '#cbd5e1' }}>›</span>
-          </div>
+          </div>}
 
           {/* Promo Input Area (Expandable) */}
-          {showPromoInput && (
+          {!isFreshersWeekendEdition && showPromoInput && (
             <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8 }}>
               <input 
                 type="text" 
@@ -167,17 +213,29 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
           </div>
 
           {showPasswordInput && (
-            <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: 8 }}>
+            <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
               <input 
                 type="password" 
                 placeholder="Nova password" 
+                autoComplete="new-password"
+                minLength={8}
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontWeight: 600 }}
               />
+              <input
+                type="password"
+                placeholder="Confirmar nova password"
+                autoComplete="new-password"
+                minLength={8}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', outline: 'none', fontWeight: 600 }}
+              />
               <button 
+                type="button"
                 onClick={handlePasswordChange}
-                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '0 16px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Guardar
               </button>

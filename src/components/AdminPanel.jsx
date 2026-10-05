@@ -8,7 +8,20 @@ function generateOppositeOdds(simOdds) {
   return (Math.round((o / (o - 1)) * 0.92 * 100) / 100).toFixed(2);
 }
 
-export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet }) {
+function parseClosingDuration(label) {
+  const parts = [...label.matchAll(/(\d+)\s*([dhm])/gi)];
+  const remainder = label.replace(/(\d+)\s*([dhm])/gi, '').replace(/[\s,]+/g, '');
+  if (!parts.length || remainder) return null;
+
+  const durationMs = parts.reduce((total, [, amount, unit]) => {
+    const normalizedUnit = unit.toLowerCase();
+    const multiplier = normalizedUnit === 'd' ? 24 * 60 * 60_000 : normalizedUnit === 'h' ? 60 * 60_000 : 60_000;
+    return total + Number(amount) * multiplier;
+  }, 0);
+  return durationMs > 0 ? durationMs : null;
+}
+
+export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword }) {
 
   // ── Create Bet form ──────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -33,6 +46,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
     const o1 = parseFloat(form.opt1Odds);
     const o2 = parseFloat(form.opt2Odds);
+    const closingDuration = parseClosingDuration(form.closesInLabel);
 
     if (!form.opt1Label.trim() || !form.opt2Label.trim()) {
       setFormError('Both option labels are required.'); return;
@@ -43,11 +57,15 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
     if (!o2 || o2 <= 1) {
       setFormError('Option 2 odds must be greater than 1.'); return;
     }
+    if (!closingDuration) {
+      setFormError('Closing time must look like 24h, 2h 30m, or 3d.'); return;
+    }
 
     onAddBet({
       title: form.title.trim(),
       description: form.description.trim(),
       closes_in_label: form.closesInLabel,
+      closes_at: new Date(Date.now() + closingDuration).toISOString(),
       trending: form.trending,
       featured: form.featured,
       options: [
@@ -63,12 +81,41 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
   // ── Resolve Bet section ──────────────────────────────────────────────────
   const [resolvingId, setResolvingId] = useState(null);
   const [winningOption, setWinningOption] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [temporaryPassword, setTemporaryPassword] = useState('');
+  const [sessionsRevoked, setSessionsRevoked] = useState(null);
 
   const confirmResolve = () => {
     if (!resolvingId || !winningOption) return;
     onResolveBet(resolvingId, winningOption);
     setResolvingId(null);
     setWinningOption('');
+  };
+
+  const handlePasswordReset = async (event) => {
+    event.preventDefault();
+    setResetError('');
+    setTemporaryPassword('');
+    setSessionsRevoked(null);
+    const email = resetEmail.trim().toLowerCase();
+    if (!email.endsWith('@novaims.unl.pt')) {
+      setResetError('Introduz o email institucional da pessoa.');
+      return;
+    }
+    if (!window.confirm(`Vais substituir a password da conta ${email}. Confirma que verificaste a identidade da pessoa.`)) return;
+
+    setResetLoading(true);
+    try {
+      const result = await onResetPassword(email);
+      setTemporaryPassword(result.temporaryPassword);
+      setSessionsRevoked(result.sessionsRevoked);
+    } catch (error) {
+      setResetError(error.message || 'Não foi possível redefinir a password.');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const inp = {
@@ -92,7 +139,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
           <div style={{ color: '#166534', fontSize: 14, textAlign: 'center', padding: '16px 0', fontWeight: 600 }}>No open bets to resolve.</div>
         ) : openBets.filter(b => typeof b.id !== 'number').map(bet => {
           // Safe parse: handle string-encoded options from legacy bug
-          let opts = [];
+          let opts;
           try { opts = typeof bet.options === 'string' ? JSON.parse(bet.options) : (bet.options || []); } catch { opts = []; }
 
           const isResolving = resolvingId === bet.id;
@@ -198,6 +245,58 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
           </button>
         </form>
       </div>
+
+      {onResetPassword && (
+        <section style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 24 }}>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#9a3412' }}>
+            Redefinir password de um participante
+          </h2>
+          <p style={{ color: '#7c2d12', fontSize: 13, lineHeight: 1.5, margin: '0 0 16px' }}>
+            Confirma a identidade da pessoa antes de continuar. A password temporária só será mostrada uma vez; envia-a em privado e pede-lhe para a mudar no perfil.
+          </p>
+          <form onSubmit={handlePasswordReset} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <input
+              type="email"
+              value={resetEmail}
+              onChange={event => { setResetEmail(event.target.value); setTemporaryPassword(''); setSessionsRevoked(null); setResetError(''); }}
+              placeholder="participante@novaims.unl.pt"
+              aria-label="Email institucional do participante"
+              required
+              style={{ ...inp, flex: '1 1 260px' }}
+            />
+            <button
+              type="submit"
+              disabled={resetLoading || !resetEmail.trim()}
+              style={{ background: resetLoading ? '#fed7aa' : '#c2410c', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 16px', fontSize: 14, fontWeight: 800, cursor: resetLoading ? 'wait' : 'pointer' }}
+            >{resetLoading ? 'A redefinir...' : 'Redefinir acesso'}</button>
+          </form>
+          {resetError && <p role="alert" style={{ color: '#b91c1c', fontSize: 13, fontWeight: 600, margin: '12px 0 0' }}>{resetError}</p>}
+          {temporaryPassword && (
+            <div role="status" style={{ marginTop: 16, padding: 14, background: '#fff', border: '1px solid #fdba74', borderRadius: 8 }}>
+              <div style={{ color: '#7c2d12', fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Password temporária. Copia-a agora e envia-a em privado.</div>
+              <p style={{ color: sessionsRevoked ? '#166534' : '#b91c1c', fontSize: 12, margin: '0 0 10px' }}>
+                {sessionsRevoked
+                  ? 'As sessões anteriores foram revogadas. Tokens de acesso já emitidos podem continuar válidos até expirarem.'
+                  : 'A password foi alterada, mas não foi possível revogar as sessões anteriores. Termina-as manualmente no Supabase Auth.'}
+              </p>
+              <code style={{ display: 'block', overflowWrap: 'anywhere', padding: 10, background: '#f8fafc', borderRadius: 6, color: '#1f2937', userSelect: 'all' }}>{temporaryPassword}</code>
+              <button
+                type="button"
+                onClick={async () => {
+                  try { await navigator.clipboard.writeText(temporaryPassword); }
+                  catch { setResetError('Não foi possível copiar; seleciona e copia a password manualmente.'); }
+                }}
+                style={{ marginTop: 10, background: '#fff', border: '1px solid #fdba74', borderRadius: 6, padding: '8px 12px', color: '#9a3412', fontWeight: 700, cursor: 'pointer' }}
+              >Copiar password</button>
+              <button
+                type="button"
+                onClick={() => setTemporaryPassword('')}
+                style={{ marginTop: 10, marginLeft: 8, background: 'transparent', border: 'none', padding: '8px 12px', color: '#64748b', fontWeight: 700, cursor: 'pointer' }}
+              >Ocultar</button>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

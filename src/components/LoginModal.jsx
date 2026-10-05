@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function LoginModal({ onClose }) {
   const { signInWithPassword } = useAuth();
@@ -7,13 +7,19 @@ export default function LoginModal({ onClose }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
     try {
-      await signInWithPassword(email, password);
+      const result = await signInWithPassword(email, password);
+      if (result?.requiresEmailConfirmation) {
+        setNotice('Conta criada. Confirma o endereço através do email que te enviámos e depois inicia sessão.');
+        return;
+      }
       onClose(); // modal is closed automatically if successful
     } catch (err) {
       setError(err.message);
@@ -93,6 +99,13 @@ export default function LoginModal({ onClose }) {
               borderRadius: 10, padding: '12px 14px', marginBottom: 16,
               fontSize: 13, color: '#dc2626', fontWeight: 500
             }}>⚠️ {error}</div>
+          )}
+          {notice && (
+            <div role="status" style={{
+              background: '#eff6ff', border: '1px solid #bfdbfe',
+              borderRadius: 10, padding: '12px 14px', marginBottom: 16,
+              fontSize: 13, color: '#1d4ed8', fontWeight: 500
+            }}>{notice}</div>
           )}
           <button
             type="submit" disabled={loading}

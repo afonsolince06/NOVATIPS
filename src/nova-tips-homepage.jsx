@@ -117,7 +117,7 @@ function AnimatedCounter({ value, duration = 1200 }) {
     };
     ref.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(ref.current);
-  }, [value]);
+  }, [value, duration]);
   return <>{display.toLocaleString()}</>;
 }
 
@@ -146,7 +146,6 @@ function OddsFlash({ odds }) {
 
 function BetCard({ bet, onSelect }) {
   const [selected, setSelected] = useState(null);
-  const [amount, setAmount] = useState(100);
   const isFeatured = bet.featured;
 
   return (

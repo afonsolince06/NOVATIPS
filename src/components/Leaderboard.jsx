@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
 
 const rankColor = r => r === 1 ? '#eab308' : r === 2 ? '#94a3b8' : r === 3 ? '#d97706' : '#94a3b8';
 const rankLabel = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
@@ -8,17 +8,20 @@ export default function Leaderboard() {
   const [entries, setEntries] = useState([]);
 
   useEffect(() => {
+    const source = isFreshersWeekendEdition ? 'event_leaderboard' : 'profiles';
+    const columns = isFreshersWeekendEdition ? 'balance, username' : 'email, balance, username';
+
     supabase
-      .from('profiles')
-      .select('email, balance, username')
+      .from(source)
+      .select(columns)
       .order('balance', { ascending: false })
       .limit(20)
       .then(({ data }) => {
         if (data) setEntries(data.map((u, i) => ({
           rank: i + 1,
-          name: u.username || u.email?.split('@')[0] || 'anon',
+          name: u.username || (!isFreshersWeekendEdition ? u.email?.split('@')[0] : null) || 'anon',
           tips: u.balance,
-          avatar: ((u.username || u.email)?.[0] || '?').toUpperCase(),
+          avatar: (u.username?.[0] || (!isFreshersWeekendEdition ? u.email?.[0] : null) || '?').toUpperCase(),
         })));
       });
   }, []);

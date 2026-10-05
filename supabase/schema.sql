@@ -1,0 +1,23 @@
+-- NOVA TIPS database inventory
+--
+-- This file is an index, not a full bootstrap script. Apply versioned SQL in
+-- supabase/migrations/ in order, after reviewing it for the target project.
+-- Never paste production credentials or run historical data-repair SQL here.
+--
+-- Tables used by the current frontend:
+--   public.bets
+--   public.profiles
+--   public.placed_bets
+--   public.push_subscriptions (created by the Freshers Weekend core migration)
+--   public.admin_password_reset_audit (created by the admin-reset migration)
+--
+-- RPCs called by the frontend:
+--   place_bet, place_multiple_bet, resolve_bet, delete_bet,
+--   claim_weekly_tips, process_referral, update_my_username
+--   admin_revoke_user_sessions (service_role only)
+--
+-- The previous contents mixed duplicate function drafts with one-off balance
+-- repairs and destructive user deletions. Those are not part of a repeatable
+-- schema and must not be rerun as setup. The core table definitions and the
+-- current production versions of the RPCs were not present, so this inventory
+-- intentionally does not guess at them.

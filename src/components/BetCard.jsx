@@ -1,12 +1,44 @@
+import { useEffect, useState } from 'react';
+
 export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
   const closesLabel = bet.closes_in_label || bet.closesIn || '';
+  const [now, setNow] = useState(null);
+
+  useEffect(() => {
+    const initialTimeout = setTimeout(() => setNow(Date.now()), 0);
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, []);
   
   // Calculate automatic expiry based on hours in the label
   let isExpired = false;
   let remainingText = closesLabel;
   let isClosingSoon = false;
 
-  if (bet.created_at) {
+  if (bet.closes_at && now !== null) {
+    const expiresAt = new Date(bet.closes_at).getTime();
+    if (now > expiresAt) {
+      isExpired = true;
+    } else {
+      const diffMs = expiresAt - now;
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (diffHours >= 24) {
+        const diffDays = Math.floor(diffHours / 24);
+        remainingText = `${diffDays}d ${diffHours % 24}h`;
+      } else if (diffHours > 0) {
+        remainingText = `${diffHours}h ${diffMinutes}m`;
+        if (diffHours <= 3) isClosingSoon = true;
+      } else {
+        remainingText = `${diffMinutes}m`;
+        isClosingSoon = true;
+      }
+    }
+  } else if (bet.created_at && now !== null) {
     const hoursMatch = closesLabel.match(/(\d+)/);
     if (hoursMatch) {
       const hours = parseInt(hoursMatch[1], 10);
@@ -17,8 +49,6 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
       
       const createdAtTime = new Date(bet.created_at).getTime();
       const expiresAt = createdAtTime + (totalHours * 60 * 60 * 1000);
-      const now = Date.now();
-
       if (now > expiresAt) {
         isExpired = true;
       } else {
@@ -44,7 +74,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
   }
 
   // Safe parse: handle both proper JSONB array and accidental string (legacy bug)
-  let opts = [];
+  let opts;
   try {
     opts = typeof bet.options === 'string' ? JSON.parse(bet.options) : (bet.options || []);
   } catch { opts = []; }

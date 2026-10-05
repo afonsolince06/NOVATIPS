@@ -1,7 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-
-const AuthContext = createContext({});
+import { AuthContext } from './AuthContextValue';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -10,6 +9,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch(() => {
+      setUser(null);
       setLoading(false);
     });
 
@@ -22,28 +24,34 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithPassword = async (email, password) => {
-    if (!email.endsWith('@novaims.unl.pt')) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.endsWith('@novaims.unl.pt')) {
       throw new Error('Use your NOVA IMS institutional email.');
     }
 
     // Attempt to sign in
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     
     if (error) {
       // If invalid credentials, we can't be sure if user doesn't exist or wrong password
       // Let's attempt to sign up
       if (error.message.includes('Invalid login') || error.message.includes('credentials')) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data, error: signUpError } = await supabase.auth.signUp({ email: normalizedEmail, password });
         if (signUpError) {
-          if (signUpError.message.includes('already registered')) {
+          if (signUpError.message.toLowerCase().includes('already registered')) {
             throw new Error('Password errada! Tenta novamente.');
+          }
+          if (signUpError.message.toLowerCase().includes('database error saving new user')) {
+            throw new Error('Não foi possível criar a conta. Confirma que o email está na lista do FDS e tenta novamente.');
           }
           throw new Error(signUpError.message);
         }
-        return; // successfully signed up and logged in
+        return { requiresEmailConfirmation: !data.session, user: data.user };
       }
       throw new Error(error.message);
     }
+
+    return { requiresEmailConfirmation: false, user: null };
   };
 
   const signOut = async () => {
@@ -57,5 +65,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

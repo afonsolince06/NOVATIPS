@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { supabase } from './lib/supabase';
-import { INITIAL_BETS } from './data/bets';
+import { useState, useEffect, useCallback } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
+import { isFreshersWeekendEdition, supabase } from './lib/supabase';
 import Navbar from './components/Navbar';
 import BetCard from './components/BetCard';
-import BetModal from './components/BetModal';
 import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
 import AdminPanel from './components/AdminPanel';
@@ -13,20 +12,16 @@ import BetSlipModal from './components/BetSlipModal';
 import ProfileModal from './components/ProfileModal';
 import Toast from './components/Toast';
 import Footer from './components/Footer';
+import { useNotifications } from './hooks/useNotifications';
 
 const ADMIN_EMAILS = ['20241710@novaims.unl.pt']; // ← change to your email
 
-const TICKER = [
-  "João T. colocou 300 TIPS em Cardoso chegar atrasado 💀",
-  "Ana P. ganhou 1,200 TIPS no Party Animal 🏆",
-  "beatriz.mf continua invicta — 14 wins seguidos 🔥",
-  "Novo bet disponível ⏰",
-  "Rui S. entrou all-in com 500 TIPS 💎",
-];
-
 function AppContent() {
   const { user } = useAuth();
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
+  const [weekendAdminUserId, setWeekendAdminUserId] = useState(null);
+  const isAdmin = isFreshersWeekendEdition
+    ? Boolean(user && weekendAdminUserId === user.id)
+    : Boolean(user && ADMIN_EMAILS.includes(user.email));
 
   const [bets, setBets] = useState([]);
   const [filter, setFilter] = useState('All');
@@ -40,13 +35,49 @@ function AppContent() {
   const [balance, setBalance] = useState(0);
   const [username, setUsername] = useState(null);
   const [lastClaim, setLastClaim] = useState(null);
-  const [tickerIdx, setTickerIdx] = useState(0);
 
-  // Ticker
-  useEffect(() => {
-    const t = setInterval(() => setTickerIdx(i => (i + 1) % TICKER.length), 4000);
-    return () => clearInterval(t);
+  // Push Notification hook
+  const { subscribed: notifSubscribed, loading: notifLoading, supported: notifSupported, toggle: notifToggle } = useNotifications(user);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
   }, []);
+
+  const fetchBets = useCallback(async () => {
+    const { data } = await supabase
+      .from('bets').select('*').eq('status', 'open').order('created_at', { ascending: false });
+    return data || [];
+  }, []);
+
+  const fetchProfile = useCallback(async () => {
+    if (!user) return null;
+    let { data } = await supabase
+      .from('profiles').select('balance, last_claim_at, username').eq('id', user.id).maybeSingle();
+
+    if (!data) {
+      const { data: newProfile } = await supabase.from('profiles').insert([
+        { id: user.id, email: user.email, balance: 2500, last_claim_at: null }
+      ]).select('balance, last_claim_at, username').single();
+      data = newProfile;
+    }
+
+    return data;
+  }, [user]);
+
+  const fetchMyBets = useCallback(async () => {
+    if (!user) return [];
+    const { data } = await supabase
+      .from('placed_bets').select('*').eq('user_id', user.id).order('placed_at', { ascending: false });
+    return data || [];
+  }, [user]);
+
+  const loadBets = useCallback(async () => setBets(await fetchBets()), [fetchBets]);
+  const loadProfile = useCallback(async () => {
+    const data = await fetchProfile();
+    if (data) { setBalance(data.balance); setLastClaim(data.last_claim_at); setUsername(data.username); }
+  }, [fetchProfile]);
+  const loadMyBets = useCallback(async () => setMyBets(await fetchMyBets()), [fetchMyBets]);
 
   // Detect referral code in URL
   useEffect(() => {
@@ -74,57 +105,80 @@ function AppContent() {
           });
       }
     }
-  }, [user]);
+  }, [user, showToast, loadProfile]);
 
   // Load bets on mount
-  useEffect(() => { loadBets(); }, []);
+  useEffect(() => {
+    let active = true;
+    fetchBets().then(data => { if (active) setBets(data); });
+    return () => { active = false; };
+  }, [fetchBets]);
+
+  useEffect(() => {
+    document.title = isFreshersWeekendEdition
+      ? 'NOVA TIPS | Edição Fds do Caloiro'
+      : 'NOVA TIPS';
+  }, []);
 
   // Load user data when logged in
   useEffect(() => {
-    if (user) { loadProfile(); loadMyBets(); }
-    else { setBalance(0); setMyBets([]); }
+    if (!user) return;
+    let active = true;
+    fetchProfile().then(data => {
+      if (active && data) {
+        setBalance(data.balance);
+        setLastClaim(data.last_claim_at);
+        setUsername(data.username);
+      }
+    });
+    fetchMyBets().then(data => { if (active) setMyBets(data); });
+    return () => { active = false; };
+  }, [user, fetchProfile, fetchMyBets]);
+
+  useEffect(() => {
+    if (!isFreshersWeekendEdition || !user) return;
+
+    let active = true;
+    supabase.rpc('freshers_weekend_is_admin').then(({ data, error }) => {
+      if (active) setWeekendAdminUserId(!error && data === true ? user.id : null);
+    });
+    return () => { active = false; };
   }, [user]);
 
   // Reload my bets & profile when switching to history tab
   useEffect(() => {
-    if (activeTab === 'history' && user) { loadMyBets(); loadProfile(); }
-  }, [activeTab]);
+    if (activeTab !== 'history' || !user) return;
+    let active = true;
+    fetchMyBets().then(data => { if (active) setMyBets(data); });
+    fetchProfile().then(data => {
+      if (active && data) {
+        setBalance(data.balance);
+        setLastClaim(data.last_claim_at);
+        setUsername(data.username);
+      }
+    });
+    return () => { active = false; };
+  }, [activeTab, user, fetchMyBets, fetchProfile]);
 
-  // ── Data loaders ────────────────────────────────────────────────────────
-
-  const loadBets = async () => {
-    const { data } = await supabase
-      .from('bets').select('*').eq('status', 'open').order('created_at', { ascending: false });
-    setBets(data || []);
-  };
-
-  const loadProfile = async () => {
-    let { data } = await supabase
-      .from('profiles').select('balance, last_claim_at, username').eq('id', user.id).maybeSingle();
-
-    if (!data) {
-      // Create missing profile gracefully
-      const { data: newProfile } = await supabase.from('profiles').insert([
-        { id: user.id, email: user.email, balance: 2500, last_claim_at: null }
-      ]).select('balance, last_claim_at, username').single();
-      data = newProfile;
-    }
-
-    if (data) { setBalance(data.balance); setLastClaim(data.last_claim_at); setUsername(data.username); }
-  };
-
-  const loadMyBets = async () => {
-    const { data } = await supabase
-      .from('placed_bets').select('*').eq('user_id', user.id).order('placed_at', { ascending: false });
-    if (data) setMyBets(data);
-  };
+  // Supabase Realtime — show in-app toast when a new bet is published
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:bets:inserts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bets' },
+        (payload) => {
+          if (payload.new?.status === 'open') {
+            showToast(`🎯 Nova aposta: ${payload.new.title}`, 'info');
+            loadBets();
+          }
+        }
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [loadBets, showToast]);
 
   // ── Actions ──────────────────────────────────────────────────────────────
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
 
   const handleOptionClick = (bet, option) => {
     if (!user) { setShowLogin(true); return; }
@@ -213,12 +267,26 @@ function AppContent() {
       showToast('All options need a label and odds greater than 1.', 'error'); return;
     }
 
-    const payload = { ...newBet, options: opts }; // Pass plain array — Supabase serializes JSONB automatically
+    const payload = { ...newBet, options: opts };
+    if (!isFreshersWeekendEdition) delete payload.closes_at;
     console.log('[handleAddBet] Inserting bet:', JSON.stringify(payload, null, 2));
 
     const { error } = await supabase.from('bets').insert([payload]);
     if (error) { showToast('Error publishing bet: ' + error.message, 'error'); return; }
     await loadBets();
+
+    // Send push notification to all subscribers
+    try {
+      await supabase.functions.invoke('send-bet-notification', {
+        body: {
+          title: `🎯 Nova aposta: ${payload.title}`,
+          body: payload.description || 'Entra e faz a tua previsão!',
+        }
+      });
+    } catch (e) {
+      console.warn('[Push] Could not send push notification:', e);
+    }
+
     showToast('Bet published! ✅');
   };
 
@@ -240,6 +308,24 @@ function AppContent() {
     await loadBets();
     await loadProfile();
     showToast(`Aposta apagada e saldos reembolsados! 🗑️`);
+  };
+
+  const handleAdminPasswordReset = async (email) => {
+    const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+      body: { email },
+    });
+    if (error) {
+      let message = error.message;
+      try {
+        const response = await error.context.json();
+        if (response.error) message = response.error;
+      } catch {
+        // Keep the SDK error when the response has no JSON details.
+      }
+      throw new Error(message);
+    }
+    if (!data?.temporaryPassword) throw new Error('The reset completed without returning a temporary password.');
+    return data;
   };
 
   // ── Derived state ────────────────────────────────────────────────────────
@@ -278,19 +364,32 @@ function AppContent() {
         />
       )}
 
-      {isProfileOpen && user && (
+      {(isProfileOpen || user?.user_metadata?.force_password_change === true) && user && (
         <ProfileModal
           user={user}
           balance={balance}
           username={username}
           setUsername={setUsername}
-          onClose={() => setIsProfileOpen(false)}
-          onSignOut={async () => { await supabase.auth.signOut(); setIsProfileOpen(false); }}
+          forcePasswordChange={user.user_metadata?.force_password_change === true}
+          onClose={() => {
+            if (user.user_metadata?.force_password_change !== true) setIsProfileOpen(false);
+          }}
+          onPasswordChanged={() => setIsProfileOpen(false)}
+          onSignOut={async () => {
+            await supabase.auth.signOut();
+            setIsProfileOpen(false);
+            setBetSlip([]);
+            setIsBetSlipOpen(false);
+            setBalance(0);
+            setMyBets([]);
+            setUsername(null);
+            setLastClaim(null);
+          }}
         />
       )}
 
       {/* Sticky Bet Slip Bar */}
-      {betSlip.length > 0 && !isBetSlipOpen && (
+      {user && betSlip.length > 0 && !isBetSlipOpen && (
         <div style={{
           position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)', maxWidth: 400,
@@ -320,7 +419,12 @@ function AppContent() {
         onLoginClick={() => setShowLogin(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         balance={balance}
-        activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
+        activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin}
+        notifSubscribed={notifSubscribed}
+        notifLoading={notifLoading}
+        notifSupported={notifSupported}
+        onNotifToggle={notifToggle}
+      />
 
       {/* ── BETS TAB ── */}
       {activeTab === 'bets' && (
@@ -333,6 +437,11 @@ function AppContent() {
             borderBottom: '1px solid #e5e7eb', marginBottom: 24
           }}>
             <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
+              {isFreshersWeekendEdition && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fef08a', color: '#422006', borderRadius: 6, padding: '7px 12px', marginBottom: 14, fontSize: 12, fontWeight: 800 }}>
+                  EDIÇÃO FDS DO CALOIRO
+                </div>
+              )}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#fca5a5', fontWeight: 700, backdropFilter: 'blur(4px)' }}>
                 ⚠️ FOR ENTERTAINMENT ONLY
               </div>
@@ -452,7 +561,13 @@ function AppContent() {
       {/* ── ADMIN TAB ── */}
       {activeTab === 'admin' && isAdmin && (
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
-          <AdminPanel openBets={bets} onAddBet={handleAddBet} onResolveBet={handleResolveBet} onDeleteBet={handleDeleteBet} />
+          <AdminPanel
+            openBets={bets}
+            onAddBet={handleAddBet}
+            onResolveBet={handleResolveBet}
+            onDeleteBet={handleDeleteBet}
+            onResetPassword={isFreshersWeekendEdition ? handleAdminPasswordReset : null}
+          />
         </div>
       )}
 

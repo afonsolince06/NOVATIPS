@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
-export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin }) {
-  const { user, signOut } = useAuth();
+export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin, notifSubscribed, notifLoading, notifSupported, onNotifToggle }) {
+  const { user } = useAuth();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -76,6 +76,34 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
                 TIPS {balance.toLocaleString()}
               </span>
             </div>
+          )}
+
+          {/* Notification Bell */}
+          {user && notifSupported && (
+            <button
+              onClick={onNotifToggle}
+              disabled={notifLoading}
+              title={notifSubscribed ? 'Desativar notificações' : 'Ativar notificações'}
+              style={{
+                position: 'relative',
+                background: notifSubscribed ? '#f0fdf4' : '#f8fafc',
+                border: notifSubscribed ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                borderRadius: 10, width: 36, height: 36,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: notifLoading ? 'wait' : 'pointer',
+                fontSize: 16, transition: 'all 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              {notifSubscribed ? '🔔' : '🔕'}
+              {!notifSubscribed && (
+                <span style={{
+                  position: 'absolute', top: 4, right: 4,
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: '#f59e0b', border: '1.5px solid #fff'
+                }} />
+              )}
+            </button>
           )}
 
           {/* Desktop User Info */}

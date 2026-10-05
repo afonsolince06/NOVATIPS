@@ -1,0 +1,59 @@
+# Edição Fds do Caloiro: configuração
+
+Esta edição usa o mesmo frontend, mas deve ser publicada como uma aplicação Vercel separada e ligada a um projeto Supabase novo. Não ligues esta edição ao projeto Supabase do site atual: a separação do projeto é o que mantém apostas, contas e saldos independentes.
+
+## 1. Criar e preparar o Supabase
+
+1. Cria um projeto Supabase novo para a edição do FDS.
+2. No SQL Editor desse projeto, executa `migrations/20261004000200_freshers_weekend_core.sql` uma vez.
+3. Executa `migrations/20261004000300_admin_password_reset_audit.sql` e `migrations/20261004000400_bet_deadlines.sql`, uma vez cada e por esta ordem. A primeira adiciona auditoria, revogação de sessões e a regra de password nova; a segunda atualiza uma base já criada para usar prazos de fecho reais.
+4. Antes de permitir registos, adiciona o email do administrador e os emails dos participantes à allowlist. Substitui os exemplos e executa o bloco no SQL Editor:
+
+```sql
+INSERT INTO public.freshers_weekend_access (email, is_admin)
+VALUES
+  ('admin@novaims.unl.pt', true),
+  ('participante1@novaims.unl.pt', false),
+  ('participante2@novaims.unl.pt', false)
+ON CONFLICT (email) DO UPDATE SET is_admin = EXCLUDED.is_admin;
+```
+
+Confirma também que o provider de email/password está ativo. Se a confirmação de email estiver ligada, o site mantém uma mensagem de confirmação visível até a pessoa clicar no link recebido.
+
+Os emails têm de estar em minúsculas. O trigger de autenticação só permite registos de emails `@novaims.unl.pt` que já estejam nesta lista. O primeiro saldo de cada conta é 2.500 TIPS. O campo `is_admin` é a autorização real no servidor para criar, resolver e apagar apostas.
+
+Se já executaste a migration `002` neste projeto, **não a voltes a executar**. Executa apenas `003` e `004` no SQL Editor, por esta ordem, para adicionar as funcionalidades novas sem recriar tabelas.
+
+Na edição FDS, o separador Admin consulta o papel `is_admin` no Supabase novo; não é preciso alterar a lista de administradores usada pelo site antigo. As funções SQL também validam esse papel no servidor.
+
+## Reset administrativo de password
+
+1. No projeto Supabase novo, abre **Edge Functions**, cria a função `admin-reset-password`, copia o conteúdo de `functions/admin-reset-password/index.ts` e faz deploy. Mantém a verificação JWT ativa. A função usa `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` do próprio projeto; o Supabase disponibiliza esses secrets às Edge Functions.
+2. Publica esta função antes de fazer redeploy do site Vercel.
+3. No separador Admin, introduz o email institucional exato do participante e confirma que verificaste a identidade da pessoa.
+4. A password temporária aparece uma única vez no painel. Envia-a apenas à pessoa por um canal privado e pede-lhe que a altere no perfil assim que entrar. Não a guardes nem a publiques.
+
+A função confirma o JWT, verifica `is_admin` na allowlist no servidor, aceita apenas contas de participantes autorizados e regista a ação sem guardar a password. Revoga as refresh sessions da conta alvo; access tokens já emitidos podem continuar válidos até expirarem. A password temporária é obrigatoriamente substituída na próxima entrada. Nunca coloques a `service_role` key no frontend ou nas variáveis `VITE_*`.
+
+## 2. Criar uma publicação Vercel separada
+
+1. Importa o mesmo repositório como um projeto Vercel novo, com um nome e domínio próprios para o FDS.
+2. Mantém o framework Vite, comando de build `npm run build` e diretório de saída `dist`.
+3. Nas variáveis de ambiente desse projeto, define:
+   - `VITE_SITE_EDITION` = `freshers-weekend`
+   - `VITE_FDS_SUPABASE_URL` = URL do projeto Supabase novo
+   - `VITE_FDS_SUPABASE_ANON_KEY` = chave anon/public desse projeto
+4. Não substituas as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do projeto Vercel antigo.
+5. Em Supabase > Authentication > URL Configuration, define o domínio novo como Site URL e adiciona-o às Redirect URLs.
+6. Faz redeploy do projeto Vercel do FDS após definir as variáveis.
+
+`VITE_FDS_SUPABASE_ANON_KEY` é uma chave pública para o browser; nunca uses a `service_role` key no frontend, em ficheiros `.env` publicados ou no Vercel client-side.
+
+## 3. Dados e funcionalidades
+
+- Contas, apostas, referrals e saldos desta edição ficam no projeto Supabase novo.
+- O schema cria o ranking sem emails, restringe acesso aos convidados e valida as apostas no servidor.
+- Cada aposta guarda um prazo real. O formulário aceita durações como `24h`, `2h 30m` e `3d`, e o servidor recusa apostas depois do prazo.
+- A lista de convidados não é exposta aos outros participantes; gere-a no SQL Editor/Supabase Dashboard.
+- Push notifications são opcionais. Para as ativar, configura a chave VAPID pública e publica a Edge Function de notificações no projeto Supabase novo.
+- `schema.sql` é apenas um índice informativo. Não o executes como script de instalação.
