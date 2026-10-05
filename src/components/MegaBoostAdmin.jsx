@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import BetCard from './BetCard';
+import MegaBoost from './MegaBoost';
 import { generateOppositeOdds, resolveOptionBOdds } from '../lib/predictionOdds';
 
 const empty = { enabled: true, active: false, title: '', description: '', section: 'general', yes_label: 'Sim', no_label: 'Não', yes_odds: '', no_odds: '', boosted_odds: '', boosted_no_odds: '', closes_at: '', badge: '', image_path: '' };
@@ -9,12 +9,14 @@ export default function MegaBoostAdmin({ bets, sections, onSaved }) {
  const [id, setId] = useState('');
  const [form, setForm] = useState(empty);
  const [file, setFile] = useState(null);
+ const [fileUrl, setFileUrl] = useState('');
+ useEffect(() => () => { if (fileUrl) URL.revokeObjectURL(fileUrl); }, [fileUrl]);
  const [busy, setBusy] = useState(false);
  const [error, setError] = useState('');
  const [notice, setNotice] = useState('');
  const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
  const choose = value => {
-   setId(value); setFile(null); setError(''); setNotice('');
+   setId(value); setFile(null); setFileUrl(''); setError(''); setNotice('');
    const bet = bets.find(b => b.id === value);
    if (!bet) { setForm(empty); return; }
    const options = typeof bet.options === 'string' ? JSON.parse(bet.options) : bet.options;
@@ -61,7 +63,7 @@ export default function MegaBoostAdmin({ bets, sections, onSaved }) {
      <label>Título<input required value={form.title} onChange={e => set('title',e.target.value)} /></label>
      <label>Descrição curta<input value={form.description} onChange={e => set('description',e.target.value)} /></label>
      <label>Evento interno<select value={form.section} onChange={e => set('section',e.target.value)}>{sections.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}</select></label>
-     <label>Imagem / banner (JPG, PNG, WebP · máximo 5 MB)<input key={id + form.image_path} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} /></label>
+     <label>Imagem / banner (JPG, PNG, WebP · máximo 5 MB)<input key={id + form.image_path} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const selected = e.target.files?.[0] || null; setFile(selected); setFileUrl(selected ? URL.createObjectURL(selected) : ''); }} /></label>
      {imageUrl && <img className="mega-admin-preview" src={imageUrl} alt="Banner atual" />}
      <div className="mega-admin-grid">
        <label>Opção A — Nome<input required value={form.yes_label} onChange={e => set('yes_label',e.target.value)} /></label>
@@ -73,7 +75,7 @@ export default function MegaBoostAdmin({ bets, sections, onSaved }) {
        <label>Data/hora de fecho (hora local)<input required type="datetime-local" value={form.closes_at} onChange={e => set('closes_at',e.target.value)} /></label>
      </div>
      <label>Badge personalizado (opcional)<input maxLength={80} value={form.badge} onChange={e => set('badge',e.target.value)} /></label>
-     <div className="fds-app"><h3>Live Preview</h3><BetCard variant="fds" bet={{ title: form.title || 'Título do Mega Boost', description: form.description, closes_at: form.closes_at ? new Date(form.closes_at).toISOString() : undefined, options: [{ label: form.yes_label, odds: Number(form.boosted_odds || form.yes_odds) || 0 }, ...(form.no_label.trim() ? [{ label: form.no_label, odds: Number(form.boosted_no_odds || resolveOptionBOdds(form.yes_odds, form.no_odds)) || 0 }] : [])] }} onOptionClick={() => {}} /></div>
+     <div className="fds-app"><h3>Live Preview</h3><MegaBoost imageUrl={fileUrl || imageUrl} bet={{ mega_boost: { image_path: form.image_path, badge: form.badge, base_yes_odds: form.yes_odds, base_no_odds: resolveOptionBOdds(form.yes_odds, form.no_odds), boosted_odds: form.boosted_odds, boosted_no_odds: form.no_label.trim() ? form.boosted_no_odds : null }, title: form.title || 'Título do Mega Boost', description: form.description, closes_at: form.closes_at ? new Date(form.closes_at).toISOString() : undefined, options: [{ label: form.yes_label, odds: Number(form.boosted_odds || form.yes_odds) || 0 }, ...(form.no_label.trim() ? [{ label: form.no_label, odds: Number(form.boosted_no_odds || resolveOptionBOdds(form.yes_odds, form.no_odds)) || 0 }] : [])] }} onOptionClick={() => {}} /></div>
      {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
      <button disabled={busy} type="submit">{busy ? 'A guardar…' : 'Guardar previsão / Mega Boost'}</button>
    </form>
