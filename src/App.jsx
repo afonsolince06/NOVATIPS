@@ -708,14 +708,13 @@ function AppContent() {
       {/* ── MY BETS TAB ── */}
       {activeTab === 'history' && (
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px 60px' }}>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 24, margin: '0 0 24px', letterSpacing: -0.5, color: '#1a1a1a' }}>My Bets</h2>
           {!user ? (
             <div style={{ textAlign: 'center', padding: '60px 0', background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb' }}>
               <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
-              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1a1a1a' }}>Login to see your bets</div>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 16, color: '#1a1a1a' }}>Entra para veres as tuas previsões</div>
               <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', borderRadius: 8, padding: '12px 24px', cursor: 'pointer' }}>Login 🎓</button>
             </div>
-          ) : <MyBets myBets={myBets} />}
+          ) : <MyBets myBets={myBets} bets={bets} sections={FRESHERS_WEEKEND_SECTIONS} onViewBets={() => setActiveTab('bets')} />}
         </div>
       )}
 

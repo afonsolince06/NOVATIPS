@@ -1,0 +1,1 @@
+export function historySummary(bets){const won=bets.filter(b=>b.status==='Won').length;const lost=bets.filter(b=>b.status==='Lost').length;return {total:bets.length,won,lost,pending:bets.filter(b=>b.status==='Pending').length,accuracy:won+lost?won/(won+lost)*100:null};}

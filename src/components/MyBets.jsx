@@ -1,91 +1,22 @@
-const statusStyle = s => {
-  if (s === 'Won') return { color: '#16a34a', bg: '#dcfce7', border: '#bbf7d0' };
-  if (s === 'Lost') return { color: '#dc2626', bg: '#fee2e2', border: '#fecaca' };
-  return { color: '#d97706', bg: '#fef3c7', border: '#fde68a' }; // Pending
-};
-
-export default function MyBets({ myBets }) {
-  if (myBets.length === 0) {
-    return (
-      <div style={{
-        background: '#ffffff', border: '1px solid #e5e7eb',
-        borderRadius: 16, padding: '48px 24px', textAlign: 'center',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-      }}>
-        <div style={{ fontSize: 40, marginBottom: 14 }}>🎯</div>
-        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif", color: '#1a1a1a' }}>
-          No bets yet
-        </div>
-        <div style={{ color: '#64748b', fontSize: 13 }}>Place your first prediction to see it here.</div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {myBets.map(b => {
-        const status = statusStyle(b.status);
-        return (
-          <div key={b.id} style={{
-            background: '#ffffff', border: '1px solid #e5e7eb',
-            borderRadius: 12, padding: '16px 20px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            flexWrap: 'wrap', gap: 16,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-          }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: '#1a1a1a' }}>{b.bet_title || b.title}</div>
-              <div style={{ fontSize: 13, color: '#64748b' }}>
-                <span style={{ color: '#1e90ff', fontWeight: 700 }}>{b.option_label || b.option}</span>
-                {' · '}
-                <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, color: '#00c853' }}>{Number(b.odds).toFixed(2)}</span>
-                {' · '}
-                <span style={{ color: '#94a3b8' }}>{new Date(b.placed_at || b.placedAt).toLocaleDateString()}</span>
-              </div>
-              {b.is_multiple && b.legs && (
-                <details style={{ marginTop: 12 }}>
-                  <summary style={{ cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 700, outline: 'none' }}>
-                    Ver apostas ({b.legs.length})
-                  </summary>
-                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {b.legs.map((leg, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#f8fafc', padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                        <span style={{ color: '#334155' }}>{leg.bet_title}</span>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ fontWeight: 700, color: '#1e90ff' }}>{leg.option_label}</span>
-                          <span style={{ background: leg.status === 'Won' ? '#dcfce7' : leg.status === 'Lost' ? '#fee2e2' : '#fef3c7', color: leg.status === 'Won' ? '#16a34a' : leg.status === 'Lost' ? '#dc2626' : '#d97706', padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 800 }}>
-                            {leg.status || 'Pending'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, fontWeight: 600 }}>Placed</div>
-                <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: '#334155' }}>{b.amount.toLocaleString()}</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4, fontWeight: 600 }}>Return</div>
-                <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Inter', sans-serif", color: '#00c853' }}>
-                  {(b.potential_return || b.potentialReturn || 0).toLocaleString()}
-                </div>
-              </div>
-              <div style={{
-                background: status.bg,
-                border: `1px solid ${status.border}`,
-                color: status.color,
-                borderRadius: 20, padding: '4px 12px',
-                fontSize: 11, fontWeight: 700,
-              }}>{b.status}</div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+import { useState } from 'react';
+import './MyBets.css';
+const number=n=>Number(n||0).toLocaleString('pt-PT');
+const labels={Won:'✓ ACERTOU',Lost:'✕ FALHOU',Pending:'⏳ POR RESOLVER',Cancelled:'ANULADA'};
+import { historySummary } from '../lib/historySummary';
+function dayLabel(value){const d=new Date(value);if(!Number.isFinite(d.getTime()))return 'Sem data';const now=new Date();const yesterday=new Date();yesterday.setDate(now.getDate()-1);return d.toDateString()===now.toDateString()?'Hoje':d.toDateString()===yesterday.toDateString()?'Ontem':d.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'});}
+export default function MyBets({myBets,bets=[],sections=[],onViewBets}){
+ const [filter,setFilter]=useState('All');const stats=historySummary(myBets);
+ const filtered=[...myBets].filter(b=>filter==='All'||b.status===filter).sort((a,b)=>new Date(b.placed_at||b.placedAt)-new Date(a.placed_at||a.placedAt));
+ const groups=new Map();filtered.forEach(b=>{const day=dayLabel(b.placed_at||b.placedAt);groups.set(day,[...(groups.get(day)||[]),b]);});
+ return <div className="history-dashboard"><header className="history-hero"><h1>🎟 AS MINHAS PREVISÕES</h1><p>Acompanha as tuas previsões e resultados no FDS.</p></header>
+ <div className="history-stats">{[[stats.total,'PREVISÕES'],[stats.won,'CERTAS ✓'],[stats.accuracy==null?'—':stats.accuracy.toLocaleString('pt-PT',{maximumFractionDigits:1})+'%','TAXA DE ACERTO']].map(([value,label])=><div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
+ <div className="history-filters" aria-label="Filtrar previsões">{[['All','Todas',stats.total],['Pending','⏳ Ativas',stats.pending],['Won','✓ Certas',stats.won],['Lost','✕ Falhadas',stats.lost]].map(([id,label,count])=><button key={id} aria-pressed={filter===id} onClick={()=>setFilter(id)}>{label} <span>{count}</span></button>)}</div>
+ {!myBets.length?<section className="history-empty"><h2>🎟 Ainda não fizeste nenhuma previsão.</h2><p>Escolhe uma aposta e começa a subir no ranking.</p><button onClick={onViewBets}>Ver apostas</button></section>:!filtered.length?<p className="history-empty">Não há previsões neste filtro.</p>:[...groups].map(([day,items])=><section className="history-group" key={day}><h2>{day}</h2>{items.map(b=>{const prediction=bets.find(p=>p.id===b.bet_id);const section=sections.find(s=>s.id===(b.section||prediction?.section));const date=new Date(b.placed_at||b.placedAt);const close=prediction?.closes_at?new Date(prediction.closes_at):null;return <article className={'history-card status-'+b.status} key={b.id}>
+ <div className="history-card-top"><span>{b.is_multiple?'PREVISÃO MÚLTIPLA':section?.title||'PREVISÃO'}{(b.mega_boost?.enabled||prediction?.mega_boost?.enabled)&&' · 🔥 MEGA BOOST'}</span><span className="history-status">{labels[b.status]||'POR RESOLVER'}</span></div>
+ <h3>{b.bet_title||b.title}</h3><div className="history-selection"><small>A TUA PREVISÃO</small><strong>{b.option_label||b.option} <span>· {Number(b.odds).toFixed(2)}</span></strong></div>
+ {b.is_multiple&&b.legs&&<details><summary>Ver seleções ({b.legs.length})</summary>{b.legs.map((leg,i)=><div className="history-leg" key={i}><span>{leg.bet_title}<strong>{leg.option_label} · {Number(leg.odds).toFixed(2)}</strong></span><span>{labels[leg.status]||labels.Pending}</span></div>)}</details>}
+ <footer><div className="history-tips">{number(b.amount)} TIPS {b.status==='Won'?<strong>→ +{number(b.potential_return??b.potentialReturn)} TIPS recebidos</strong>:b.status==='Lost'?<strong>→ −{number(b.amount)} TIPS</strong>:b.status==='Cancelled'?<span>· Anulada</span>:<span>apostados · Retorno possível: {number(b.potential_return??b.potentialReturn)} TIPS</span>}</div><time dateTime={Number.isFinite(date.getTime())?date.toISOString():undefined}>{Number.isFinite(date.getTime())?date.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}):'—'}</time></footer>
+ {b.status==='Pending'&&close&&<p className="history-close">{close>Date.now()?'Fecha a '+close.toLocaleString('pt-PT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Fechada · aguarda resultado'}</p>}
+ </article>;})}</section>)}
+ </div>;
 }
