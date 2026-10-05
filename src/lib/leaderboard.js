@@ -1,0 +1,2 @@
+export function rankLeaderboard(users) { const sorted=[...users].sort((a,b)=>Number(b.balance)-Number(a.balance)); return sorted.map(u=>({...u,rank:sorted.findIndex(v=>Number(v.balance)===Number(u.balance))+1,name:u.username?.trim()||u.student_number||u.email?.split('@')[0]||'Participante',tips:Number(u.balance)||0})); }
+export function nextRankTarget(entries,id) {const own=entries.find(u=>u.id===id);if(!own)return null;const above=entries.filter(u=>u.tips>own.tips).at(-1);return above?{rank:above.rank,difference:above.tips-own.tips}:null;}

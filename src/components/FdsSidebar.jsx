@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { rankLeaderboard } from '../lib/leaderboard';
 import { supabase } from '../lib/supabase';
 
 const DEMO_LEADERS = [
@@ -21,9 +22,10 @@ export default function FdsSidebar({ user, balance, username, myBets, canClaim, 
       .order('balance', { ascending: false })
       .then(({ data, error }) => {
         if (active && !error && data) {
-          setLeaders(data.slice(0, 3));
-          const ownRank = data.findIndex(entry => entry.id === user.id);
-          setRank(ownRank === -1 ? null : ownRank + 1);
+          const ranked = rankLeaderboard(data);
+          setLeaders(ranked.slice(0, 3));
+          const ownRank = ranked.find(entry => entry.id === user.id)?.rank;
+          setRank(ownRank || null);
         }
       });
     return () => { active = false; };
@@ -69,7 +71,7 @@ export default function FdsSidebar({ user, balance, username, myBets, canClaim, 
           <ol className="fds-leader-list">
             {leaders.map((entry, index) => (
               <li key={entry.username || index}>
-                <span className={`fds-rank rank-${index + 1}`}>{index + 1}</span>
+                <span className={`fds-rank rank-${index + 1}`}>{entry.rank || index + 1}</span>
                 <span className="fds-leader-avatar">{(entry.username?.[0] || entry.student_number?.[0] || '?').toUpperCase()}</span>
                 <span className="fds-leader-name">{entry.username || entry.student_number || 'Caloiro'}</span>
                 <strong>{Number(entry.balance || 0).toLocaleString('pt-PT')}</strong>

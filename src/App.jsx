@@ -701,8 +701,7 @@ function AppContent() {
       {/* ── LEADERBOARD TAB ── */}
       {activeTab === 'leaderboard' && (
         <div className="admin-page" style={{ maxWidth: 1440, margin: '0 auto', padding: '24px 24px 60px' }}>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 24, margin: '0 0 24px', letterSpacing: -0.5, color: '#1a1a1a' }}>Global Leaderboard 🏆</h2>
-          <Leaderboard />
+          <Leaderboard user={user} />
         </div>
       )}
 

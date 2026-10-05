@@ -1,54 +1,20 @@
 import { useState, useEffect } from 'react';
 import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
-
-const rankColor = r => r === 1 ? '#eab308' : r === 2 ? '#94a3b8' : r === 3 ? '#d97706' : '#94a3b8';
-const rankLabel = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
-
-export default function Leaderboard() {
-  const [entries, setEntries] = useState([]);
-
-  useEffect(() => {
-    const source = isFreshersWeekendEdition ? 'event_leaderboard' : 'profiles';
-    const columns = isFreshersWeekendEdition ? '*' : 'email, balance, username';
-
-    supabase
-      .from(source)
-      .select(columns)
-      .order('balance', { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        if (data) setEntries(data.map((u, i) => ({
-          rank: i + 1,
-          name: u.username || u.student_number || (!isFreshersWeekendEdition ? u.email?.split('@')[0] : null) || 'anon',
-          tips: u.balance,
-          avatar: (u.username?.[0] || u.student_number?.[0] || (!isFreshersWeekendEdition ? u.email?.[0] : null) || '?').toUpperCase(),
-        })));
-      });
-  }, []);
-
-  return (
-    <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <span style={{ fontWeight: 800, fontSize: 15, fontFamily: "'Space Grotesk', sans-serif", color: '#1a1a1a' }}>🏆 Leaderboard</span>
-        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>By balance</span>
-      </div>
-
-      {entries.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ fontSize: 28, marginBottom: 10 }}>🚀</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 4 }}>No rankings yet</div>
-          <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>Be the first to place a bet<br />and claim the top spot!</div>
-        </div>
-      ) : entries.map(u => (
-        <div key={u.rank} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: u.rank < entries.length ? '1px solid #f1f5f9' : 'none' }}>
-          <span style={{ width: 22, fontSize: 14, textAlign: 'center', color: rankColor(u.rank), fontWeight: 700 }}>{rankLabel(u.rank)}</span>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: `hsl(${u.rank * 60}, 55%, 90%)`, color: `hsl(${u.rank * 60}, 55%, 30%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{u.avatar}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</div>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', fontFamily: "'Inter', sans-serif" }}>{u.tips.toLocaleString()}</div>
-        </div>
-      ))}
-    </div>
-  );
+import { rankLeaderboard, nextRankTarget } from '../lib/leaderboard';
+import '../leaderboard.css';
+const format=value=>Number(value).toLocaleString('pt-PT');
+function Avatar({entry}) {return <span className="ranking-avatar" style={{background:'hsl('+entry.rank*60+',55%,88%)',color:'hsl('+entry.rank*60+',55%,25%)'}}>{entry.name[0]?.toUpperCase()||'?'}</span>;}
+export default function Leaderboard({ user }) {
+ const [entries,setEntries]=useState([]);const [loading,setLoading]=useState(true);const [error,setError]=useState('');
+ useEffect(()=>{let active=true;async function load(){setLoading(true);setError('');try{const users=[];for(let page=0;;page++){const {data,error}=await supabase.from(isFreshersWeekendEdition?'event_leaderboard':'profiles').select(isFreshersWeekendEdition?'*':'id,email,balance,username').order('balance',{ascending:false}).order('id',{ascending:true}).range(page*1000,page*1000+999);if(error)throw error;users.push(...data);if(data.length<1000)break;}if(active)setEntries(rankLeaderboard(users));}catch(err){if(active)setError(err.message||'Não foi possível carregar a classificação.');}finally{if(active)setLoading(false);}}load();return()=>{active=false;};},[user?.id]);
+ const own=entries.find(u=>u.id===user?.id);const target=nextRankTarget(entries,user?.id);
+ const top=entries.slice(0,3);const podium=[top[1],top[0],top[2]].filter(Boolean);
+ return <div className="fds-ranking-page">
+ <section className="ranking-hero"><header><h1>🏆 TOP DO <em>FDS</em></h1><p>Quem está a dominar as previsões?</p></header>
+ {!loading&&!error&&<div className="ranking-podium">{podium.map(entry=>{const slot=top.indexOf(entry)+1;return <article key={entry.id} className={'podium-card podium-'+slot}><span className="podium-crown" aria-hidden="true">♛</span><span className="podium-rank">#{entry.rank}</span><Avatar entry={entry}/><h2>{entry.name}</h2><strong>{format(entry.tips)} <small>TIPS</small></strong><div className="podium-base"/></article>;})}</div>}
+ </section>
+ {own&&<section className="ranking-own"><div><h2>A TUA POSIÇÃO</h2><div className="ranking-own-identity"><b>#{own.rank}</b><Avatar entry={own}/><strong>{own.name}</strong></div></div><strong className="ranking-balance">{format(own.tips)} TIPS</strong><p className="ranking-progress">{own.rank===1?'👑 Estás no topo do FDS!':target?<>↑ Faltam <b>{format(target.difference)} TIPS</b> para igualares o #{target.rank}</>:'Partilhas esta posição com outros participantes.'}</p></section>}
+ <section className="ranking-list"><div className="ranking-list-heading"><h2>▥ CLASSIFICAÇÃO GLOBAL</h2><span>Por TIPS ↓</span></div><p className="ranking-ties">Saldos iguais partilham a mesma posição.</p>
+ {loading?<p role="status">A carregar classificação…</p>:error?<p role="alert">{error}</p>:!entries.length?<p>Ainda não há participantes na classificação.</p>:<table><thead><tr><th scope="col">#</th><th scope="col">UTILIZADOR</th><th scope="col">TIPS</th></tr></thead><tbody>{entries.map(entry=><tr key={entry.id} className={entry.id===user?.id?'is-current':''}><td><span className={'ranking-medal medal-'+entry.rank}>{entry.rank}</span></td><td><div className="ranking-user"><Avatar entry={entry}/><span>{entry.name}{entry.id===user?.id&&<small> · Tu</small>}</span></div></td><td>{format(entry.tips)}</td></tr>)}</tbody></table>}
+ </section></div>;
 }
