@@ -137,3 +137,12 @@
 
 button.mega-boost-image { display:block; width:100%; padding:0; border:0; background:transparent; cursor:zoom-in; text-align:inherit; }
 .mega-boost-image-hint { position:absolute; right:14px; bottom:16px; z-index:1; padding:6px 10px; border:1px solid #c887e877; border-radius:8px; background:#170b25cc; color:#fff; font-size:12px; font-weight:700; }
+
+/* Portrait artwork only at the existing mobile breakpoint. */
+@media(max-width:700px){
+ .fds-app .fds-event-hero{min-height:640px;padding:28px 20px!important;box-sizing:border-box;background-image:linear-gradient(to bottom,rgba(10,2,20,.65) 0%,rgba(10,2,20,.42) 35%,rgba(10,2,20,.08) 62%,rgba(10,2,20,.35) 100%),url('/fds/hero-mobile.png')!important;background-size:cover!important;background-position:center 58%!important;background-repeat:no-repeat}
+ .fds-app .fds-event-hero::before{content:none;background-image:none}
+ .fds-app .fds-hero-title .fds-hero-question{max-width:340px;font-size:20px;line-height:1.25}
+ .fds-app .fds-hero-copy{max-width:285px!important;font-size:15px!important;line-height:1.5!important;margin:12px 0 18px!important}
+ .fds-app .fds-event-hero>div>button{background:#acfa5c!important;color:#14200a!important;box-shadow:0 0 18px #acfa5c25!important}
+}
