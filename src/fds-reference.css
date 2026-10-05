@@ -134,3 +134,6 @@
 .mega-admin button:disabled { opacity:.6; cursor:wait; }
 .mega-admin [role=alert] { color:#b91c1c; }
 @media(max-width:600px) { .mega-admin-grid { grid-template-columns:1fr; } .mega-boost-heading,.mega-boost-body { padding-inline:14px; } }
+
+button.mega-boost-image { display:block; width:100%; padding:0; border:0; background:transparent; cursor:zoom-in; text-align:inherit; }
+.mega-boost-image-hint { position:absolute; right:14px; bottom:16px; z-index:1; padding:6px 10px; border:1px solid #c887e877; border-radius:8px; background:#170b25cc; color:#fff; font-size:12px; font-weight:700; }

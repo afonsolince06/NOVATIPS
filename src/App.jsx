@@ -559,7 +559,7 @@ function AppContent() {
                   </div>
                   {isFreshersWeekendDemo && <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>}
 
-                  {megaBoost && <MegaBoost bet={megaBoost} onOptionClick={handleOptionClick} selectedOptionLabel={betSlip.find(item => item.bet.id === megaBoost.id)?.option.label} />}
+                  {megaBoost && <MegaBoost bet={megaBoost} onExpandImage={setExpandedPoster} onOptionClick={handleOptionClick} selectedOptionLabel={betSlip.find(item => item.bet.id === megaBoost.id)?.option.label} />}
 
                   <div className="fds-demo-sections">
                     {visibleWeekendSections.map(section => {
