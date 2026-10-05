@@ -154,6 +154,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
                 <button onClick={() => onDeleteBet(bet.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Apagar 🗑️</button>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: isResolving ? 16 : 0 }}>
+                {bet.mega_boost && opts.length === 1 && <button type="button" onClick={() => { setResolvingId(bet.id); setWinningOption('__mega_not_happened'); }} style={{ padding: 10, borderRadius: 8, border: '1px solid #fecaca', color: '#b91c1c', cursor: 'pointer' }}>Não aconteceu — apostas perdidas</button>}
                 {opts.map((opt, i) => (
                   <button key={i} onClick={() => { setResolvingId(bet.id); setWinningOption(opt.label); }}
                     style={{
@@ -171,7 +172,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
               {isResolving && winningOption && (
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={confirmResolve} style={{ flex: 1, background: '#10b981', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none', borderRadius: 8, padding: '12px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)' }}>
-                    Confirm: "{winningOption}" wins 🏆
+                    {winningOption === '__mega_not_happened' ? 'Confirmar: não aconteceu — apostas perdidas' : `Confirmar: ${winningOption} vence 🏆`}
                   </button>
                   <button onClick={() => { setResolvingId(null); setWinningOption(''); }} style={{ background: '#ffffff', border: '1px solid #cbd5e1', color: '#64748b', borderRadius: 8, padding: '12px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
                     Cancel

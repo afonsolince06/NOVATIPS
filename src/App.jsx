@@ -320,10 +320,9 @@ function AppContent() {
   };
 
   const handleResolveBet = async (betId, winningOption) => {
-    const { error } = await supabase.rpc('resolve_bet', {
-      p_bet_id: betId,
-      p_winning_option: winningOption,
-    });
+    const { error } = winningOption === '__mega_not_happened'
+      ? await supabase.rpc('resolve_single_option_mega_boost_loss', { p_bet_id: betId })
+      : await supabase.rpc('resolve_bet', { p_bet_id: betId, p_winning_option: winningOption });
     if (error) { showToast('Error resolving: ' + error.message, 'error'); return; }
     await loadBets();
     await loadProfile();
