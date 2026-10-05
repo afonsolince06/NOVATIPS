@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
-import { isFreshersWeekendEdition, supabase } from './lib/supabase';
+import { isFreshersWeekendDemo, isFreshersWeekendEdition, supabase } from './lib/supabase';
+import { FRESHERS_WEEKEND_DEMO_BETS, FRESHERS_WEEKEND_SECTIONS } from './data/freshersWeekendDemo';
 import Navbar from './components/Navbar';
 import BetCard from './components/BetCard';
 import LoginModal from './components/LoginModal';
@@ -25,6 +26,7 @@ function AppContent() {
 
   const [bets, setBets] = useState([]);
   const [filter, setFilter] = useState('All');
+  const [activeDemoSection, setActiveDemoSection] = useState('all');
   const [activeTab, setActiveTab] = useState('bets');
   const [betSlip, setBetSlip] = useState([]);
   const [isBetSlipOpen, setIsBetSlipOpen] = useState(false);
@@ -45,6 +47,7 @@ function AppContent() {
   }, []);
 
   const fetchBets = useCallback(async () => {
+    if (isFreshersWeekendDemo) return FRESHERS_WEEKEND_DEMO_BETS;
     const { data } = await supabase
       .from('bets').select('*').eq('status', 'open').order('created_at', { ascending: false });
     return data || [];
@@ -162,6 +165,7 @@ function AppContent() {
 
   // Supabase Realtime — show in-app toast when a new bet is published
   useEffect(() => {
+    if (isFreshersWeekendDemo) return undefined;
     const channel = supabase
       .channel('public:bets:inserts')
       .on(
@@ -181,6 +185,10 @@ function AppContent() {
   // ── Actions ──────────────────────────────────────────────────────────────
 
   const handleOptionClick = (bet, option) => {
+    if (isFreshersWeekendDemo) {
+      showToast('Demonstração visual: as apostas ainda não estão ligadas.', 'info');
+      return;
+    }
     if (!user) { setShowLogin(true); return; }
 
     const existingIndex = betSlip.findIndex(item => item.bet.id === bet.id);
@@ -341,6 +349,10 @@ function AppContent() {
     return true;
   });
 
+  const visibleDemoSections = FRESHERS_WEEKEND_SECTIONS.filter(section =>
+    activeDemoSection === 'all' || section.id === activeDemoSection
+  );
+
   return (
     <div style={{ minHeight: '100vh', background: '#f5f7fa', color: '#1a1a1a', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <style>{`
@@ -416,10 +428,11 @@ function AppContent() {
       )}
 
       <Navbar
-        onLoginClick={() => setShowLogin(true)}
+        onLoginClick={() => !isFreshersWeekendDemo && setShowLogin(true)}
         onProfileClick={() => setIsProfileOpen(true)}
         balance={balance}
         activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin}
+        hideLogin={isFreshersWeekendDemo}
         notifSubscribed={notifSubscribed}
         notifLoading={notifLoading}
         notifSupported={notifSupported}
@@ -430,9 +443,11 @@ function AppContent() {
       {activeTab === 'bets' && (
         <>
           {/* Hero */}
-          <div style={{
+          <div className={isFreshersWeekendDemo ? 'fds-event-hero' : undefined} style={{
             padding: '60px 32px 50px', position: 'relative', overflow: 'hidden',
-            backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%), url("/logo.jpg.jpeg")',
+            backgroundImage: isFreshersWeekendDemo
+              ? 'linear-gradient(100deg, rgba(19, 8, 35, 0.9), rgba(43, 8, 62, 0.58)), radial-gradient(ellipse at 78% 20%, rgba(223, 44, 248, 0.68), transparent 43%), radial-gradient(ellipse at 10% 90%, rgba(135, 35, 226, 0.7), transparent 45%), linear-gradient(135deg, #170d28, #39124c)'
+              : 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%), url("/logo.jpg.jpeg")',
             backgroundSize: 'cover', backgroundPosition: 'center',
             borderBottom: '1px solid #e5e7eb', marginBottom: 24
           }}>
@@ -446,14 +461,17 @@ function AppContent() {
                 ⚠️ FOR ENTERTAINMENT ONLY
               </div>
 
-              <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: -1, color: '#ffffff' }}>
-                IMS BEST TIPS.<br />
-                <span style={{ color: '#a3e635' }}>Dicas que marcam.</span>
+              <h1 style={{ fontSize: isFreshersWeekendDemo ? 58 : 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.02, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", color: '#ffffff', maxWidth: 800 }}>
+                {isFreshersWeekendDemo ? (
+                  <>FIM DE SEMANA<br /><span style={{ color: '#ef83ff' }}>DO CALOIRO</span></>
+                ) : (
+                  <>IMS BEST TIPS.<br /><span style={{ color: '#a3e635' }}>Dicas que marcam.</span></>
+                )}
               </h1>
               <p style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.
+                {isFreshersWeekendDemo ? 'Uma previsão para cada momento. TIPS virtuais, rivalidade amigável.' : 'A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.'}
               </p>
-              {!user && (
+              {!user && !isFreshersWeekendDemo && (
                 <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.2)' }}>
                   Entrar com @novaims 🎓
                 </button>
@@ -465,6 +483,72 @@ function AppContent() {
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 60px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {/* Bets */}
             <div style={{ flex: 1, minWidth: 'min(100%, 600px)' }}>
+              {isFreshersWeekendDemo ? (
+                <div className="fds-demo">
+                  <div className="fds-demo-intro">
+                    <div>
+                      <span className="fds-demo-kicker">ACTIVE BETS · DEMO VISUAL</span>
+                      <h2>Escolhe o ambiente</h2>
+                    </div>
+                    <span className="fds-demo-total">{filteredBets.length} previsões</span>
+                  </div>
+                  <div className="fds-demo-tabs" role="tablist" aria-label="Secções de apostas">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeDemoSection === 'all'}
+                      className={activeDemoSection === 'all' ? 'is-active' : ''}
+                      onClick={() => setActiveDemoSection('all')}
+                    >Todas <span>{filteredBets.length}</span></button>
+                    {FRESHERS_WEEKEND_SECTIONS.map(section => {
+                      const count = filteredBets.filter(bet => bet.section === section.id).length;
+                      return (
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={activeDemoSection === section.id}
+                          className={activeDemoSection === section.id ? 'is-active' : ''}
+                          key={section.id}
+                          onClick={() => setActiveDemoSection(section.id)}
+                        >{section.label} <span>{count}</span></button>
+                      );
+                    })}
+                  </div>
+                  <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>
+
+                  <div className="fds-demo-sections">
+                    {visibleDemoSections.map(section => {
+                      const sectionBets = filteredBets.filter(bet => bet.section === section.id);
+                      if (!sectionBets.length) return null;
+                      return (
+                        <section className={`fds-demo-section theme-${section.theme}`} key={section.id}>
+                          <div className="fds-demo-section-head">
+                            <span className="fds-demo-symbol" aria-hidden="true">{section.symbol}</span>
+                            <div>
+                              <span className="fds-demo-eyebrow">{section.eyebrow}</span>
+                              <h3>{section.title}</h3>
+                              <p>{section.description}</p>
+                            </div>
+                            <div className="fds-demo-section-meta">
+                              <span className="fds-demo-section-count">{sectionBets.length} bets</span>
+                              {section.poster && <img className="fds-demo-poster" src={section.poster} alt={`Cartaz: ${section.title}`} />}
+                            </div>
+                          </div>
+                          <div className="fds-demo-bets">
+                            {sectionBets.map(bet => (
+                              <BetCard key={bet.id} bet={bet} onOptionClick={handleOptionClick} />
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })}
+                    {visibleDemoSections.every(section => !filteredBets.some(bet => bet.section === section.id)) && (
+                      <div className="fds-demo-empty">Sem apostas nesta secção com o filtro atual.</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
               <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 {['All', 'Hot', 'Closing'].map(f => (
                   <button key={f} onClick={() => setFilter(f)} style={{
@@ -503,10 +587,20 @@ function AppContent() {
                   })}
                 </div>
               )}
+                </>
+              )}
             </div>
 
             {/* Sidebar */}
             <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {isFreshersWeekendDemo ? (
+                <div className="fds-demo-sidebar">
+                  <span className="fds-demo-kicker">CONCEITO DE NAVEGAÇÃO</span>
+                  <strong>Quatro momentos.<br />Um fim de semana.</strong>
+                  <p>As cores ajudam a reconhecer cada ambiente; odds e cartões mantêm a mesma leitura em todas as secções.</p>
+                  <div><span className="fds-demo-pulse" /> Preview interativo</div>
+                </div>
+              ) : <>
               {/* Wallet */}
               <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <div style={{ fontSize: 12, color: '#666', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>A tua Carteira</div>
@@ -531,6 +625,7 @@ function AppContent() {
                   ⚠️ FOR ENTERTAINMENT ONLY<br />NO REAL MONEY · ALL CURRENCY VIRTUAL
                 </p>
               </div>
+              </>}
             </div>
           </div>
         </>
@@ -577,5 +672,7 @@ function AppContent() {
 }
 
 export default function App() {
-  return <AuthProvider><AppContent /></AuthProvider>;
+  return isFreshersWeekendDemo
+    ? <AppContent />
+    : <AuthProvider><AppContent /></AuthProvider>;
 }

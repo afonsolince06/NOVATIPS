@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 // VITE_SUPABASE_ANON_KEY=your-anon-key
 
 export const isFreshersWeekendEdition = import.meta.env.VITE_SITE_EDITION === 'freshers-weekend';
+export const isFreshersWeekendDemo = isFreshersWeekendEdition && import.meta.env.VITE_FDS_DEMO === 'true';
 
 const supabaseUrl = isFreshersWeekendEdition
   ? import.meta.env.VITE_FDS_SUPABASE_URL

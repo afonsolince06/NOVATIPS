@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
 
-export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin, notifSubscribed, notifLoading, notifSupported, onNotifToggle }) {
+export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin, notifSubscribed, notifLoading, notifSupported, onNotifToggle, hideLogin = false }) {
   const { user } = useAuth();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -121,7 +121,7 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
             </div>
           )}
 
-          {!user && (
+          {!user && !hideLogin && (
             <button
               onClick={onLoginClick}
               style={{
