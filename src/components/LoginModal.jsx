@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/useAuth';
+import { isFreshersWeekendEdition } from '../lib/supabase';
 
 export default function LoginModal({ onClose }) {
   const { signInWithPassword, signUp, resetPassword } = useAuth();
@@ -18,6 +19,10 @@ export default function LoginModal({ onClose }) {
     setLoading(true);
     try {
       if (mode === 'reset') {
+        if (isFreshersWeekendEdition) {
+          setNotice('Para recuperar o acesso, contacta a organização do FDS. Um administrador irá dar-te uma password temporária.');
+          return;
+        }
         await resetPassword(email);
         setNotice('Se existir uma conta com este email, receberás um link para redefinir a password.');
         return;
@@ -137,7 +142,12 @@ export default function LoginModal({ onClose }) {
           >{loading ? 'A processar...' : mode === 'signup' ? 'Criar conta' : mode === 'reset' ? 'Enviar link de recuperação' : 'Entrar'}</button>
           <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16, marginBottom: 0, fontWeight: 500 }}>
             <button type="button" disabled={loading} onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} style={{ background: 'none', border: 0, color: '#2563eb', cursor: 'pointer' }}>{mode === 'login' ? 'Não tens conta? Criar conta' : 'Voltar a Entrar'}</button>
-            {mode === 'login' && <button type="button" disabled={loading} onClick={() => switchMode('reset')} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 0, color: '#2563eb', cursor: 'pointer' }}>Esqueci-me da password</button>}
+            {mode === 'login' && <button type="button" disabled={loading} onClick={() => {
+              if (isFreshersWeekendEdition) {
+                setError('');
+                setNotice('Esqueceste-te da password? Contacta a organização do FDS para recuperar o acesso. Receberás uma password temporária que terás de mudar ao entrar.');
+              } else switchMode('reset');
+            }} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 0, color: '#2563eb', cursor: 'pointer' }}>Esqueci-me da password</button>}
           </p>
         </form>
       </div>

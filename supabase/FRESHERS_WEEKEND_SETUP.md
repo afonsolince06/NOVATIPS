@@ -18,7 +18,11 @@ VALUES
 ON CONFLICT (email) DO UPDATE SET is_admin = EXCLUDED.is_admin;
 ```
 
-Confirma também que o provider de email/password está ativo. Se a confirmação de email estiver ligada, o site mantém uma mensagem de confirmação visível até a pessoa clicar no link recebido.
+Confirma que o provider de email/password está ativo e desativa **Confirm email** em Authentication > Sign In / Providers > Email no projeto FDS. Os novos registos entram imediatamente, sem email de confirmação. A recuperação de acesso é feita pela organização através da função administrativa; a interface FDS não envia emails de recuperação. Não alteres a configuração do projeto antigo.
+
+Contas antigas ainda não confirmadas devem ser revistas e confirmadas individualmente em Authentication > Users antes de testar o login.
+
+Depois da migration 003, aplica também `migrations/20261005000200_fix_forced_password_change.sql` para corrigir o trigger de mudança obrigatória de password. Não voltes a executar a migration 003.
 
 Os emails têm de estar em minúsculas. O trigger de autenticação só permite registos de emails `@novaims.unl.pt` que já estejam nesta lista. O primeiro saldo de cada conta é 2.500 TIPS. O campo `is_admin` é a autorização real no servidor para criar, resolver e apagar apostas.
 
