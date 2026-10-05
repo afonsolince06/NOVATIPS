@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MegaBoostAdmin from './MegaBoostAdmin';
 
 // Auto-generates a fair opposite odd with a small house margin.
 // e.g. Sim @ 1.70 → Não @ ~2.23
@@ -21,7 +22,7 @@ function parseClosingDuration(label) {
   return durationMs > 0 ? durationMs : null;
 }
 
-export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, enableSections = false, sections = [] }) {
+export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, enableSections = false, sections = [] }) {
 
   // ── Create Bet form ──────────────────────────────────────────────────────
   const [form, setForm] = useState({
@@ -130,6 +131,8 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {enableSections && <MegaBoostAdmin bets={openBets} sections={sections} onSaved={onMegaBoostSaved} />}
 
       {/* ── RESOLVE BETS ── */}
       <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>

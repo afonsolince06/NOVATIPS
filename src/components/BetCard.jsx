@@ -7,7 +7,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel, varia
 
   useEffect(() => {
     const initialTimeout = setTimeout(() => setNow(Date.now()), 0);
-    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(interval);
@@ -146,7 +146,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel, varia
               className={isSelected ? 'is-selected' : undefined}
               aria-pressed={isSelected}
               disabled={isExpired}
-              onClick={() => !isExpired && onOptionClick(bet, opt)}
+              onClick={() => !isExpired && (!bet.closes_at || new Date(bet.closes_at).getTime() > Date.now()) && onOptionClick(bet, opt)}
               style={{
                 flex: 1, minWidth: 80, 
                 background: isExpired ? '#f8fafc' : (isSelected ? (isFds ? '#f0f8dc' : '#1e90ff') : '#ffffff'),

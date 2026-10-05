@@ -62,3 +62,11 @@ A função confirma o JWT, verifica `is_admin` na allowlist no servidor, aceita 
 - A lista de convidados não é exposta aos outros participantes; gere-a no SQL Editor/Supabase Dashboard.
 - Push notifications são opcionais. Para as ativar, configura a chave VAPID pública e publica a Edge Function de notificações no projeto Supabase novo.
 - `schema.sql` é apenas um índice informativo. Não o executes como script de instalação.
+
+## Mega Boost
+
+Executa uma vez `migrations/20261005000400_mega_boost.sql` no projeto FDS. A migration adiciona metadados à tabela bets, a função administrativa save_mega_boost e o bucket público prediction-images (JPG/PNG/WebP, máximo 5 MB, upload exclusivo de administradores). Não usa novas categorias nem altera as funções de apostas/resolução.
+
+No Admin, abre Mega Boost para criar ou selecionar uma previsão existente, carregar imagem, definir título, descrição, Sim/Não, fecho na hora local, badge e odd boosted opcional para Sim. Marca Ativo para destacar. Só existe um ativo; substituir exige confirmação. Depois de haver apostas não podes alterar as opções/odds. Desativar ou expirar retira o destaque mas mantém a previsão no evento interno, histórico e resolução.
+
+Testar com duas contas: criar inativo, ativar, selecionar Sim/Não, colocar aposta, verificar retorno, confirmar bloqueio de edição de odds, substituir outro ativo, desativar, expirar e resolver no painel habitual. Confirmar que participantes não conseguem usar save_mega_boost ou fazer upload.

@@ -10,6 +10,8 @@ import MyBets from './components/MyBets';
 import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
 import FdsSidebar from './components/FdsSidebar';
+import MegaBoost from './components/MegaBoost';
+import { findActiveMegaBoost } from './lib/megaBoost';
 import BetSlipModal from './components/BetSlipModal';
 import ProfileModal from './components/ProfileModal';
 import Toast from './components/Toast';
@@ -30,7 +32,7 @@ function AppContent() {
   const [filterNow, setFilterNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const timer = setInterval(() => setFilterNow(Date.now()), 30_000);
+    const timer = setInterval(() => setFilterNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   const [activeDemoSection, setActiveDemoSection] = useState('all');
@@ -195,6 +197,7 @@ function AppContent() {
           }
         }
       )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bets' }, () => loadBets())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [loadBets, showToast]);
@@ -206,6 +209,7 @@ function AppContent() {
       showToast('Demonstração visual: as apostas ainda não estão ligadas.', 'info');
       return;
     }
+    if (bet.closes_at && new Date(bet.closes_at).getTime() <= Date.now()) { showToast('Esta previsão já fechou.', 'info'); return; }
     if (!user) { setShowLogin(true); return; }
 
     const existingIndex = betSlip.findIndex(item => item.bet.id === bet.id);
@@ -357,7 +361,10 @@ function AppContent() {
 
   const canClaim = !lastClaim || (new Date() - new Date(lastClaim)) / (1000 * 60 * 60 * 24) >= 7;
 
+  const megaBoost = isFreshersWeekendEdition ? findActiveMegaBoost(bets, filterNow) : null;
+
   const filteredBets = bets.filter(b => {
+    if (b.id === megaBoost?.id) return false;
     if (filter === 'Hot') return b.trending;
     if (filter === 'Closing') {
       if (isFreshersWeekendEdition && b.closes_at) {
@@ -552,6 +559,8 @@ function AppContent() {
                   </div>
                   {isFreshersWeekendDemo && <p className="fds-demo-note">Apostas de exemplo, sem ligação a contas ou saldos.</p>}
 
+                  {megaBoost && <MegaBoost bet={megaBoost} onOptionClick={handleOptionClick} selectedOptionLabel={betSlip.find(item => item.bet.id === megaBoost.id)?.option.label} />}
+
                   <div className="fds-demo-sections">
                     {visibleWeekendSections.map(section => {
                       const sectionBets = filteredBets.filter(bet => (bet.section || 'general') === section.id);
@@ -717,6 +726,7 @@ function AppContent() {
           <AdminPanel
             openBets={bets}
             onAddBet={handleAddBet}
+            onMegaBoostSaved={loadBets}
             onResolveBet={handleResolveBet}
             onDeleteBet={handleDeleteBet}
             onResetPassword={isFreshersWeekendEdition ? handleAdminPasswordReset : null}

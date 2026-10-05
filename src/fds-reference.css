@@ -105,3 +105,32 @@
  .fds-app .fds-event-hero::before { inset-inline-start:20%; opacity:.35; }
  .fds-app .fds-hero-title .fds-hero-question { max-width:100%; }
 }
+
+.mega-boost { margin:8px 0 24px; border:1px solid #d771f3; border-radius:16px; overflow:hidden; background:linear-gradient(120deg,#230d39dd,#10081fee),url('/fds/purple-texture.jpeg') center/cover; box-shadow:0 0 24px #cc50eb22; }
+.mega-boost-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:16px 20px; }
+.mega-boost-heading > span { color:#ffcb4e; font-weight:900; font-size:19px; letter-spacing:1px; }
+.mega-boost-heading strong { color:#f2d8ff; font-size:12px; }
+.mega-boost-image { height:clamp(180px,24vw,300px); position:relative; }
+.mega-boost-image img { width:100%; height:100%; object-fit:cover; object-position:center; }
+.mega-boost-image::after { content:''; position:absolute; inset:0; background:linear-gradient(0deg,#1c0b32,transparent 65%); pointer-events:none; }
+.mega-boost-body { padding:0 20px 20px; }
+.mega-boost-promo { color:#acfa5c; font-weight:800; margin-bottom:10px; font-size:14px; }
+.fds-app .mega-boost .bet-card--fds { background:transparent !important; border:0 !important; padding:0 !important; box-shadow:none !important; }
+.fds-app .mega-boost .bet-card--fds:hover { transform:none; }
+.fds-app .mega-boost .bet-card--fds h3 { font-size:clamp(22px,3vw,32px) !important; text-align:left; }
+.fds-app .mega-boost .bet-card--fds p { font-size:14px !important; text-align:left; line-height:1.6; }
+.fds-app .mega-boost .bet-card--fds button { min-height:76px; }
+.fds-app .mega-boost .bet-card--fds button span:last-child { font-size:26px !important; }
+.mega-admin { background:#faf7ff; color:#211033; border:1px solid #cba8dd; border-radius:16px; padding:24px; }
+.mega-admin h2 { margin-bottom:8px; }
+.mega-admin > p { font-size:13px; line-height:1.6; margin-bottom:16px; }
+.mega-admin form { display:grid; gap:14px; }
+.mega-admin label { display:grid; gap:6px; font-size:13px; font-weight:700; }
+.mega-admin input:not([type=checkbox]),.mega-admin select { min-width:0; width:100%; padding:12px; background:white; color:#211033; border:1px solid #cbbdd5; border-radius:8px; font:inherit; }
+.mega-admin .mega-check { display:flex; align-items:center; gap:8px; }
+.mega-admin-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.mega-admin-preview { width:100%; max-height:180px; object-fit:cover; border-radius:8px; }
+.mega-admin button[type=submit] { padding:14px; background:#40185c; color:#fff; border:0; border-radius:8px; font-weight:800; cursor:pointer; }
+.mega-admin button:disabled { opacity:.6; cursor:wait; }
+.mega-admin [role=alert] { color:#b91c1c; }
+@media(max-width:600px) { .mega-admin-grid { grid-template-columns:1fr; } .mega-boost-heading,.mega-boost-body { padding-inline:14px; } }
