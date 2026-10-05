@@ -5,6 +5,8 @@ import { AuthContext } from './AuthContextValue';
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(() => sessionStorage.getItem('passwordRecovery') === 'true');
+  const finishPasswordRecovery = () => { sessionStorage.removeItem('passwordRecovery'); setPasswordRecovery(false); };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -17,41 +19,42 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (_event === 'PASSWORD_RECOVERY') { sessionStorage.setItem('passwordRecovery', 'true'); setPasswordRecovery(true); }
+      if (_event === 'SIGNED_OUT') finishPasswordRecovery();
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithPassword = async (email, password) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.endsWith('@novaims.unl.pt')) {
-      throw new Error('Use your NOVA IMS institutional email.');
-    }
+  const normalizeEmail = (email) => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized.endsWith('@novaims.unl.pt')) throw new Error('Usa o teu email institucional @novaims.unl.pt.');
+    return normalized;
+  };
 
-    // Attempt to sign in
-    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-    
+  const signInWithPassword = async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizeEmail(email), password });
     if (error) {
-      // If invalid credentials, we can't be sure if user doesn't exist or wrong password
-      // Let's attempt to sign up
-      if (error.message.includes('Invalid login') || error.message.includes('credentials')) {
-        const { data, error: signUpError } = await supabase.auth.signUp({ email: normalizedEmail, password });
-        if (signUpError) {
-          if (signUpError.message.toLowerCase().includes('already registered')) {
-            throw new Error('Password errada! Tenta novamente.');
-          }
-          if (signUpError.message.toLowerCase().includes('database error saving new user')) {
-            throw new Error('Não foi possível criar a conta. Confirma que o email está na lista do FDS e tenta novamente.');
-          }
-          throw new Error(signUpError.message);
-        }
-        return { requiresEmailConfirmation: !data.session, user: data.user };
-      }
+      if (error.code === 'invalid_credentials' || /invalid login|credentials/i.test(error.message)) throw new Error('Email ou password incorretos. Tenta novamente ou redefine a password.');
+      if (error.code === 'email_not_confirmed') throw new Error('Confirma primeiro o teu endereço no email de registo.');
       throw new Error(error.message);
     }
+    return { requiresEmailConfirmation: false };
+  };
 
-    return { requiresEmailConfirmation: false, user: null };
+  const signUp = async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email: normalizeEmail(email), password });
+    if (error) {
+      if (/database error saving new user/i.test(error.message)) throw new Error('Não foi possível criar a conta. Confirma que o email está na lista do FDS.');
+      throw new Error(error.message);
+    }
+    return { requiresEmailConfirmation: !data.session };
+  };
+
+  const resetPassword = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), { redirectTo: window.location.origin + '/' });
+    if (error) throw new Error(error.message);
   };
 
   const signOut = async () => {
@@ -60,7 +63,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithPassword, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithPassword, signUp, resetPassword, passwordRecovery, finishPasswordRecovery, signOut }}>
       {!loading && children}
     </AuthContext.Provider>
   );

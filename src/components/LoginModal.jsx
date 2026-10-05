@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useAuth } from '../context/useAuth';
 
 export default function LoginModal({ onClose }) {
-  const { signInWithPassword } = useAuth();
+  const { signInWithPassword, signUp, resetPassword } = useAuth();
+  const [mode, setMode] = useState('login');
+  const switchMode = (next) => { setMode(next); setPassword(''); setError(''); setNotice(''); };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,9 +17,14 @@ export default function LoginModal({ onClose }) {
     setNotice('');
     setLoading(true);
     try {
-      const result = await signInWithPassword(email, password);
+      if (mode === 'reset') {
+        await resetPassword(email);
+        setNotice('Se existir uma conta com este email, receberás um link para redefinir a password.');
+        return;
+      }
+      const result = await (mode === 'signup' ? signUp(email, password) : signInWithPassword(email, password));
       if (result?.requiresEmailConfirmation) {
-        setNotice('Conta criada. Confirma o endereço através do email que te enviámos e depois inicia sessão.');
+        setNotice('Verifica o teu email para confirmar o registo. Se já tens conta, volta a Entrar ou redefine a password.');
         return;
       }
       onClose(); // modal is closed automatically if successful
@@ -53,9 +60,9 @@ export default function LoginModal({ onClose }) {
             fontWeight: 900, fontSize: 24, color: '#fff', margin: '0 auto 14px',
           }}>N</div>
           <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, fontSize: 22, margin: '0 0 6px', letterSpacing: -0.5, color: '#1a1a1a' }}>
-            Login to NOVA TIPS
+            {mode === 'signup' ? 'Criar conta' : mode === 'reset' ? 'Recuperar password' : 'Entrar no NOVA TIPS'}
           </h2>
-          <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Use your @novaims.unl.pt email</p>
+          <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Usa o teu email @novaims.unl.pt</p>
         </div>
 
         <form onSubmit={handleLogin}>
@@ -76,12 +83,13 @@ export default function LoginModal({ onClose }) {
             onBlur={e => e.target.style.borderColor = '#cbd5e1'}
           />
 
+          {mode !== 'reset' && <>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
             Password
           </label>
           <input
             type="password" value={password} onChange={e => setPassword(e.target.value)}
-            placeholder="Escolhe uma password" required minLength={6}
+            placeholder={mode === 'signup' ? 'Escolhe uma password' : 'A tua password'} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} required minLength={mode === 'signup' ? 8 : undefined}
             style={{
               width: '100%', background: '#ffffff',
               border: '1px solid #cbd5e1', borderRadius: 12,
@@ -92,6 +100,8 @@ export default function LoginModal({ onClose }) {
             onFocus={e => e.target.style.borderColor = '#1e90ff'}
             onBlur={e => e.target.style.borderColor = '#cbd5e1'}
           />
+
+          </>}
 
           {error && (
             <div style={{
@@ -118,9 +128,10 @@ export default function LoginModal({ onClose }) {
               boxShadow: loading ? 'none' : '0 4px 6px -1px rgba(30, 144, 255, 0.2)',
               transition: 'all 0.2s'
             }}
-          >{loading ? 'A processar...' : 'Entrar / Registar 🚀'}</button>
+          >{loading ? 'A processar...' : mode === 'signup' ? 'Criar conta' : mode === 'reset' ? 'Enviar link de recuperação' : 'Entrar'}</button>
           <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16, marginBottom: 0, fontWeight: 500 }}>
-            🔒 Se não tens conta, será criada automaticamente.
+            <button type="button" disabled={loading} onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')} style={{ background: 'none', border: 0, color: '#2563eb', cursor: 'pointer' }}>{mode === 'login' ? 'Não tens conta? Criar conta' : 'Voltar a Entrar'}</button>
+            {mode === 'login' && <button type="button" disabled={loading} onClick={() => switchMode('reset')} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 0, color: '#2563eb', cursor: 'pointer' }}>Esqueci-me da password</button>}
           </p>
         </form>
       </div>

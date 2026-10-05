@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { isFreshersWeekendEdition, supabase } from '../lib/supabase';
 
-export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, onPasswordChanged }) {
+export default function ProfileModal({ user, balance, username, setUsername, onClose, onSignOut, forcePasswordChange = false, passwordRecovery = false, onPasswordChanged }) {
   const initial = (username || user?.email)?.[0]?.toUpperCase() ?? '?';
   const [promoCode, setPromoCode] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
@@ -69,7 +69,7 @@ export default function ProfileModal({ user, balance, username, setUsername, onC
         <section style={{ width: '100%', maxWidth: 440, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 28 }}>
           <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, color: '#1a1a1a', margin: '0 0 10px' }}>Cria a tua nova password</h2>
           <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>
-            A password temporária já não pode ser usada depois deste passo. Escolhe uma password nova para continuares.
+            {passwordRecovery ? 'Escolhe uma nova password para recuperares o acesso à tua conta.' : 'A password temporária já não pode ser usada depois deste passo. Escolhe uma password nova para continuares.'}
           </p>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>Nova password</label>
           <input

@@ -19,7 +19,7 @@ import { useNotifications } from './hooks/useNotifications';
 const ADMIN_EMAILS = ['20241710@novaims.unl.pt']; // ← change to your email
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, passwordRecovery, finishPasswordRecovery } = useAuth();
   const [weekendAdminUserId, setWeekendAdminUserId] = useState(null);
   const isAdmin = isFreshersWeekendEdition
     ? Boolean(user && weekendAdminUserId === user.id)
@@ -397,17 +397,18 @@ function AppContent() {
         />
       )}
 
-      {(isProfileOpen || user?.user_metadata?.force_password_change === true) && user && (
+      {(isProfileOpen || passwordRecovery || user?.user_metadata?.force_password_change === true) && user && (
         <ProfileModal
           user={user}
           balance={balance}
           username={username}
           setUsername={setUsername}
-          forcePasswordChange={user.user_metadata?.force_password_change === true}
+          forcePasswordChange={passwordRecovery || user.user_metadata?.force_password_change === true}
+          passwordRecovery={passwordRecovery}
           onClose={() => {
             if (user.user_metadata?.force_password_change !== true) setIsProfileOpen(false);
           }}
-          onPasswordChanged={() => setIsProfileOpen(false)}
+          onPasswordChanged={() => { finishPasswordRecovery?.(); setIsProfileOpen(false); }}
           onSignOut={async () => {
             await supabase.auth.signOut();
             setIsProfileOpen(false);
