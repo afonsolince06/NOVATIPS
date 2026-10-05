@@ -1,0 +1,107 @@
+/* FDS reference theme: scoped to preserve the original edition. */
+.fds-app {
+ --fds-paper:#10091e; --fds-ink:#faf8ff; --fds-muted:#b7afcf; --fds-border:#49305e; --fds-lime-500:#acfa5c;
+ background:radial-gradient(ellipse at 20% 0%,#251039 0%,#10091e 42%,#0b0816 100%) !important;
+ color:var(--fds-ink) !important;
+}
+.fds-navbar { min-height:64px; background:rgba(15,8,29,.97) !important; padding:10px max(24px,calc((100vw - 1360px)/2)) !important; }
+.fds-navbar .nav-tab { border-radius:12px !important; font-size:13px !important; }
+.fds-navbar .nav-tab.is-active { color:#acfa5c !important; background:rgba(172,250,92,.09) !important; border-color:#617847 !important; }
+.fds-app .fds-event-hero {
+ min-height:240px; padding:28px max(24px,calc((100vw - 1360px)/2)) !important; margin-bottom:24px !important;
+ background-image:linear-gradient(90deg,rgba(16,5,30,.28),rgba(22,5,37,.35)),url('/fds/purple-texture.jpeg') !important;
+ background-position:center 46% !important; border-bottom:1px solid #672380 !important;
+}
+.fds-event-hero > div { width:100%; max-width:1360px !important; display:block !important; }
+.fds-app .fds-hero-badge,.fds-app .fds-entertainment-badge { border-radius:20px; margin-right:10px; margin-bottom:12px; font-size:10px; }
+.fds-app .fds-hero-badge { background:#acfa5c; color:#15200c; }
+.fds-app .fds-entertainment-badge { color:#fff; border-color:#46205b; background:rgba(12,7,23,.7); }
+.fds-app .fds-hero-title { max-width:none !important; margin:0 0 6px !important; }
+.fds-app .fds-hero-title .fds-brand-title { display:block; color:#fff !important; font-size:clamp(44px,5.6vw,76px); margin:0; line-height:1; font-weight:900; letter-spacing:-2px; text-shadow:none !important; }
+.fds-brand-title em { color:#acfa5c; font-style:normal; text-shadow:0 0 16px #8bd33a55; }
+.fds-app .fds-hero-title .fds-hero-question { display:block; max-width:none; margin-top:9px; font-size:clamp(18px,2vw,27px); color:#fff !important; text-shadow:none !important; letter-spacing:-.4px; }
+.fds-app .fds-hero-copy { font-size:17px !important; margin-top:4px !important; }
+.fds-app .fds-main-grid { width:min(100% - 48px,1360px); grid-template-columns:minmax(0,1fr) 340px !important; gap:22px !important; }
+.fds-demo-intro { margin-bottom:12px; }
+.fds-demo-intro h2 { color:#fff; font-size:25px; }
+.fds-demo-kicker,.fds-demo-total,.fds-demo-note { color:#b7afcf; }
+.fds-demo-tabs { margin-bottom:14px; gap:10px; }
+.fds-demo-tabs button,.fds-demo-filters button { color:#f1eafb; background:#140d24; border-color:#403051; border-radius:9px; }
+.fds-demo-tabs button:hover,.fds-demo-filters button:hover { border-color:#bc58e6; }
+.fds-demo-tabs button.is-active,.fds-demo-filters button.is-active { background:linear-gradient(135deg,#7c25a4,#3d1858); border-color:#dc6bff; box-shadow:0 0 9px #c63cfa66,inset 0 0 8px #c63cfa44; }
+.fds-demo-section { display:grid; grid-template-columns:minmax(0,1fr) 132px; column-gap:16px; row-gap:20px; padding:20px; border:1px solid #b94cce; border-radius:12px; }
+.fds-demo-section.theme-cartoons { background-image:linear-gradient(110deg,#20092d88,#150820bb),url('/fds/purple-texture.jpeg'); }
+.fds-demo-section.theme-neon { background-image:linear-gradient(110deg,#190728a6,#170824a6),url('/fds/neon-party.jpeg'); }
+.fds-demo-section.theme-rally { background-image:linear-gradient(110deg,#20092da6,#150820b6),url('/fds/rally-casas.jpeg'); }
+.fds-demo-section-head { display:contents; }
+.fds-demo-symbol { grid-column:1; grid-row:1; width:42px; height:42px; background:linear-gradient(135deg,#bf43e8,#ee9bff); box-shadow:0 0 16px #ca38ea88; border-radius:9px; }
+.fds-demo-section-head > div:not(.fds-demo-section-meta) { grid-column:1; grid-row:1; margin-left:58px; }
+.fds-demo-eyebrow { color:#f38afa; font-size:11px; }
+.fds-demo-section-head h3 { font-size:22px; letter-spacing:-.5px; }
+.fds-demo-section-head p { font-size:13px; }
+.fds-demo-section-meta { grid-column:2; grid-row:1 / span 2; align-self:start; gap:16px; }
+.fds-demo-section-count { color:#2b123d; background:#d8bce8cc; font-size:10px; }
+.fds-demo-poster { width:132px; aspect-ratio:3 / 4.3; border:2px solid #e886f7; border-radius:9px; box-shadow:0 0 12px #c953de33; }
+.fds-demo-bets { grid-column:1; grid-row:2; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-items:stretch; }
+.fds-app .bet-card--fds { background:linear-gradient(145deg,rgba(37,23,60,.94),rgba(22,14,40,.94)) !important; border:1px solid #503465 !important; border-radius:11px !important; padding:12px !important; box-shadow:none !important; }
+.fds-app .bet-card--fds h3 { color:#fff !important; font-size:13px !important; line-height:1.4; }
+.fds-app .bet-card--fds p { color:#a89bbf !important; font-size:11px !important; }
+.fds-app .bet-card--fds button { background:#190f2b !important; border-color:#49345e !important; min-width:60px !important; min-height:48px; padding:7px 5px !important; }
+.fds-app .bet-card--fds button span:first-child { color:#cdc4e2 !important; }
+.fds-app .bet-card--fds button span:last-child { color:#4feb69 !important; }
+.fds-app .bet-card--fds button span[style*="239, 68, 68"],.fds-app .bet-card--fds button span[style*="#ef4444"] { color:#ff515e !important; }
+.fds-app .bet-card--fds button.is-selected { background:linear-gradient(135deg,#acfa5c25,#acfa5c08) !important; border-color:#acfa5c !important; box-shadow:0 0 10px #acfa5c55,inset 0 0 8px #acfa5c15 !important; }
+.fds-app .bet-countdown { color:#d8c8e7 !important; border:1px solid #6e4d84; background:#41235166; padding:4px 6px; border-radius:7px; font-size:10px !important; }
+.fds-app .bet-card--fds .bet-countdown.is-closing { color:#ffb52b !important; background:#3b210ab8 !important; border-color:#d4831f !important; }
+.fds-sidebar { gap:16px; }
+.fds-wallet-panel,.fds-leaderboard-panel { background:linear-gradient(140deg,#191029,#0e0a1b); border:1px solid #614071; border-radius:12px; padding:20px; box-shadow:none; }
+.fds-wallet-panel { background-image:linear-gradient(100deg,#1c0b2ba6,#16092388),url('/fds/purple-texture.jpeg'); background-size:cover; }
+.fds-sidebar-label { color:#ee91fa; font-size:11px; }
+.fds-wallet-balance { margin-top:14px; gap:8px; }
+.fds-wallet-balance strong,.fds-wallet-balance span { font:900 clamp(28px,2.6vw,38px)/1.1 'Space Grotesk',sans-serif; }
+.fds-wallet-balance strong { color:#fff; }
+.fds-wallet-balance span { color:#acfa5c; }
+.fds-wallet-caption { color:#b7afcf; }
+.fds-player-stats { grid-template-columns:1fr; gap:10px; margin:18px 0; }
+.fds-player-stats > div { color:#fff; font-size:13px; padding:0; background:none; border:none; }
+.fds-stat-icon { font-size:19px; }
+.fds-claim-button { min-height:44px; font-size:13px; color:#102007; border-radius:9px; box-shadow:0 0 13px #acfa5c44; }
+.fds-claim-button:disabled { background:#5f7641; color:#eee; border-color:#84975d; box-shadow:none; }
+.fds-leaderboard-panel { order:3; }
+.fds-leaderboard-heading h2 { color:#fff; text-transform:uppercase; font-size:19px; }
+.fds-trophy { background:transparent; }
+.fds-leader-list li { min-height:45px; border-bottom-color:#332440; }
+.fds-leader-name { color:#f6f1ff; font-size:12px; }
+.fds-leader-list li > strong { color:#bcb3d6; font-size:12px; }
+.fds-rank { width:24px; height:24px; display:grid; place-items:center; color:#e1d8f7; background:#29203f; border-radius:50%; }
+.fds-rank.rank-1 { background:#ffcf32; color:#302002; }
+.fds-rank.rank-2 { background:#bac4da; color:#243046; }
+.fds-rank.rank-3 { background:#b8662c; color:#fff; }
+.fds-leader-avatar { background:#2b203e; width:24px; height:24px; }
+.fds-leader-link { color:#c49af1; font-size:11px; }
+.fds-leader-empty { color:#bbb0d0; }
+.fds-disclaimer { order:2; color:#c4bbdc; background:#1c142a99; border-color:#503660; padding:18px; justify-content:center; text-align:center; }
+.fds-disclaimer p { font-size:10px; }
+.fds-demo-empty { background:#1a1129; color:#b7afcf; border-color:#614071; }
+@media(min-width:901px) and (max-width:1180px) { .fds-app .fds-main-grid { grid-template-columns:minmax(0,1fr) 285px !important; } .fds-demo-bets { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:900px) { .fds-app .fds-main-grid { grid-template-columns:minmax(0,1fr) !important; width:calc(100% - 32px); } .fds-demo-bets { grid-template-columns:repeat(3,minmax(0,1fr)); } .fds-sidebar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .fds-disclaimer { grid-column:1 / -1; order:3; } }
+@media(max-width:700px) { .fds-navbar { padding:10px 14px !important; } .fds-app .fds-event-hero { min-height:240px; padding:24px 18px !important; } .fds-app .fds-hero-title .fds-brand-title { font-size:48px; } .fds-app .fds-hero-title .fds-hero-question { font-size:20px; line-height:1.25; } .fds-app .fds-hero-copy { font-size:14px !important; } .fds-demo-intro h2 { font-size:21px; } .fds-demo-section { grid-template-columns:minmax(0,1fr) 74px; padding:14px; gap:14px 10px; } .fds-demo-section-head h3 { font-size:18px; } .fds-demo-section-head p { font-size:11px; } .fds-demo-section-head > div:not(.fds-demo-section-meta) { margin-left:0; } .fds-demo-symbol { display:none; } .fds-demo-section-meta { grid-column:2; grid-row:1; gap:8px; } .fds-demo-poster { width:74px; } .fds-demo-bets { grid-column:1 / -1; grid-template-columns:minmax(0,1fr); } .fds-sidebar { display:flex; } .fds-wallet-balance strong,.fds-wallet-balance span { font-size:36px; } }
+
+/* Use the supplied composition for the hero artwork, with the existing live copy above it. */
+.fds-app .fds-event-hero::before {
+ content:''; position:absolute; inset:0 0 0 44%; pointer-events:none;
+ background-image:url('/fds/hero-reference.png');
+ background-repeat:no-repeat; background-size:auto 437.6%; background-position:right 8.1%;
+ -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 24%);
+ mask-image:linear-gradient(to right,transparent 0%,#000 24%);
+}
+.fds-app .fds-event-hero > div { position:relative; z-index:1; }
+.fds-app .fds-hero-title .fds-hero-question { max-width:760px; }
+@media(max-width:1000px) {
+ .fds-app .fds-event-hero::before { inset-inline-start:38%; opacity:.7; }
+ .fds-app .fds-hero-title .fds-hero-question { max-width:65%; }
+}
+@media(max-width:700px) {
+ .fds-app .fds-event-hero::before { inset-inline-start:20%; opacity:.35; }
+ .fds-app .fds-hero-title .fds-hero-question { max-width:100%; }
+}

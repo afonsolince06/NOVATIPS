@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
+export default function BetCard({ bet, onOptionClick, selectedOptionLabel, variant }) {
+  const isFds = variant === 'fds';
   const closesLabel = bet.closes_in_label || bet.closesIn || '';
   const [now, setNow] = useState(null);
 
@@ -20,7 +21,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
 
   if (bet.closes_at && now !== null) {
     const expiresAt = new Date(bet.closes_at).getTime();
-    if (now > expiresAt) {
+    if (now >= expiresAt) {
       isExpired = true;
     } else {
       const diffMs = expiresAt - now;
@@ -80,7 +81,7 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
   } catch { opts = []; }
 
   return (
-    <div style={{
+    <div className={isFds ? 'bet-card bet-card--fds' : undefined} style={{
       background: '#ffffff',
       border: bet.featured ? '1px solid #84cc16' : '1px solid #e5e7eb',
       borderRadius: 12, padding: '16px', position: 'relative', overflow: 'hidden',
@@ -112,12 +113,12 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
                 </span>
               )}
               {isClosingSoon && (
-                <span style={{ fontSize: 10, fontWeight: 700, background: '#fffbeb', border: '1px solid #fde68a', color: '#d97706', borderRadius: 4, padding: '2px 6px' }}>
+                <span className="bet-countdown is-closing" style={{ fontSize: 10, fontWeight: 700, background: '#fffbeb', border: '1px solid #fde68a', color: '#d97706', borderRadius: 4, padding: '2px 6px' }}>
                   ⏰ CLOSING {remainingText}
                 </span>
               )}
               {!isClosingSoon && (
-                 <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
+                 <span className="bet-countdown" style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>
                    Faltam {remainingText}
                  </span>
               )}
@@ -142,12 +143,14 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
           return (
             <button
               key={i}
+              className={isSelected ? 'is-selected' : undefined}
+              aria-pressed={isSelected}
               disabled={isExpired}
               onClick={() => !isExpired && onOptionClick(bet, opt)}
               style={{
                 flex: 1, minWidth: 80, 
-                background: isExpired ? '#f8fafc' : (isSelected ? '#1e90ff' : '#ffffff'),
-                border: isSelected ? '1px solid #1e90ff' : '1px solid #e2e8f0', 
+                background: isExpired ? '#f8fafc' : (isSelected ? (isFds ? '#f0f8dc' : '#1e90ff') : '#ffffff'),
+                border: isSelected ? `1px solid ${isFds ? '#9cc840' : '#1e90ff'}` : '1px solid #e2e8f0',
                 borderRadius: 8, padding: '12px 8px',
                 cursor: isExpired ? 'not-allowed' : 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -165,8 +168,8 @@ export default function BetCard({ bet, onOptionClick, selectedOptionLabel }) {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isSelected ? '#e0f2fe' : (isNo ? '#ef4444' : '#475569')), fontWeight: 600 }}>{opt.label}</span>
-              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isSelected ? '#ffffff' : (isNo ? '#ef4444' : '#00c853')) }}>
+              <span style={{ fontSize: 12, color: isExpired ? '#94a3b8' : (isSelected && !isFds ? '#e0f2fe' : (isNo ? '#ef4444' : '#475569')), fontWeight: 600 }}>{opt.label}</span>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, fontSize: 16, color: isExpired ? '#94a3b8' : (isSelected && !isFds ? '#ffffff' : (isNo ? '#ef4444' : '#299c60')) }}>
                 {opt.odds.toFixed(2)}
               </span>
             </button>

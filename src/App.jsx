@@ -9,6 +9,7 @@ import LoginModal from './components/LoginModal';
 import MyBets from './components/MyBets';
 import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
+import FdsSidebar from './components/FdsSidebar';
 import BetSlipModal from './components/BetSlipModal';
 import ProfileModal from './components/ProfileModal';
 import Toast from './components/Toast';
@@ -26,7 +27,14 @@ function AppContent() {
 
   const [bets, setBets] = useState([]);
   const [filter, setFilter] = useState('All');
+  const [filterNow, setFilterNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setFilterNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
   const [activeDemoSection, setActiveDemoSection] = useState('all');
+  const [expandedPoster, setExpandedPoster] = useState(null);
   const [activeTab, setActiveTab] = useState('bets');
   const [betSlip, setBetSlip] = useState([]);
   const [isBetSlipOpen, setIsBetSlipOpen] = useState(false);
@@ -45,6 +53,15 @@ function AppContent() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   }, []);
+
+  useEffect(() => {
+    if (!expandedPoster) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setExpandedPoster(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [expandedPoster]);
 
   const fetchBets = useCallback(async () => {
     if (isFreshersWeekendDemo) return FRESHERS_WEEKEND_DEMO_BETS;
@@ -343,6 +360,10 @@ function AppContent() {
   const filteredBets = bets.filter(b => {
     if (filter === 'Hot') return b.trending;
     if (filter === 'Closing') {
+      if (isFreshersWeekendEdition && b.closes_at) {
+        const remaining = new Date(b.closes_at).getTime() - filterNow;
+        return remaining > 0 && remaining <= 3 * 60 * 60 * 1000;
+      }
       const label = b.closes_in_label || b.closesIn || '';
       return label.includes('m') || (label.includes('h') && !label.includes('d'));
     }
@@ -354,7 +375,7 @@ function AppContent() {
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7fa', color: '#1a1a1a', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div className={isFreshersWeekendEdition ? 'app-shell fds-app' : 'app-shell'} style={{ minHeight: '100vh', background: '#f5f7fa', color: '#1a1a1a', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -433,6 +454,7 @@ function AppContent() {
         balance={balance}
         activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin}
         hideLogin={isFreshersWeekendDemo}
+        fdsMode={isFreshersWeekendEdition}
         notifSubscribed={notifSubscribed}
         notifLoading={notifLoading}
         notifSupported={notifSupported}
@@ -443,33 +465,33 @@ function AppContent() {
       {activeTab === 'bets' && (
         <>
           {/* Hero */}
-          <div className={isFreshersWeekendDemo ? 'fds-event-hero' : undefined} style={{
-            padding: '60px 32px 50px', position: 'relative', overflow: 'hidden',
-            backgroundImage: isFreshersWeekendDemo
-              ? 'linear-gradient(100deg, rgba(19, 8, 35, 0.9), rgba(43, 8, 62, 0.58)), radial-gradient(ellipse at 78% 20%, rgba(223, 44, 248, 0.68), transparent 43%), radial-gradient(ellipse at 10% 90%, rgba(135, 35, 226, 0.7), transparent 45%), linear-gradient(135deg, #170d28, #39124c)'
+          <div className={isFreshersWeekendEdition ? 'fds-event-hero' : undefined} style={{
+            padding: isFreshersWeekendEdition ? '34px 40px 38px' : '60px 32px 50px', position: 'relative', overflow: 'hidden',
+            backgroundImage: isFreshersWeekendEdition
+              ? 'linear-gradient(90deg, rgba(20, 7, 36, 0.94) 0%, rgba(27, 8, 43, 0.8) 53%, rgba(29, 9, 45, 0.58) 100%), url("/fds/neon-party.jpeg")'
               : 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 100%), url("/logo.jpg.jpeg")',
             backgroundSize: 'cover', backgroundPosition: 'center',
             borderBottom: '1px solid #e5e7eb', marginBottom: 24
           }}>
             <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
               {isFreshersWeekendEdition && (
-                <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fef08a', color: '#422006', borderRadius: 6, padding: '7px 12px', marginBottom: 14, fontSize: 12, fontWeight: 800 }}>
+                <div className="fds-hero-badge">
                   EDIÇÃO FDS DO CALOIRO
                 </div>
               )}
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#fca5a5', fontWeight: 700, backdropFilter: 'blur(4px)' }}>
+              <div className={isFreshersWeekendEdition ? 'fds-entertainment-badge' : undefined} style={isFreshersWeekendEdition ? undefined : { display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 20, padding: '6px 16px', marginBottom: 16, fontSize: 11, color: '#fca5a5', fontWeight: 700, backdropFilter: 'blur(4px)' }}>
                 ⚠️ FOR ENTERTAINMENT ONLY
               </div>
 
-              <h1 style={{ fontSize: isFreshersWeekendDemo ? 58 : 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.02, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", color: '#ffffff', maxWidth: 800 }}>
-                {isFreshersWeekendDemo ? (
-                  <>FIM DE SEMANA<br /><span style={{ color: '#ef83ff' }}>DO CALOIRO</span></>
+              <h1 className={isFreshersWeekendEdition ? 'fds-hero-title' : undefined} style={{ fontSize: isFreshersWeekendEdition ? 48 : 'clamp(32px, 5vw, 52px)', fontWeight: 900, lineHeight: 1.02, margin: '0 0 12px', fontFamily: "'Space Grotesk', sans-serif", color: '#ffffff', maxWidth: 800 }}>
+                {isFreshersWeekendEdition ? (
+                  <><span className="fds-brand-title">NOVA <em>TIPS</em></span><span className="fds-hero-question">ACHAS QUE SABES O QUE VAI ACONTECER NO FDS?</span></>
                 ) : (
                   <>IMS BEST TIPS.<br /><span style={{ color: '#a3e635' }}>Dicas que marcam.</span></>
                 )}
               </h1>
-              <p style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
-                {isFreshersWeekendDemo ? 'Uma previsão para cada momento. TIPS virtuais, rivalidade amigável.' : 'A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.'}
+              <p className={isFreshersWeekendEdition ? 'fds-hero-copy' : undefined} style={{ fontSize: 16, color: '#e2e8f0', maxWidth: 500, margin: '0 0 24px', lineHeight: 1.6, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+                {isFreshersWeekendEdition ? 'Faz as tuas previsões. Ganha TIPS. Sobe no ranking.' : 'A plataforma oficial de previsões da NOVA IMS. Virtual, grátis.'}
               </p>
               {!user && !isFreshersWeekendDemo && (
                 <button onClick={() => setShowLogin(true)} style={{ background: '#84cc16', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.2)' }}>
@@ -480,9 +502,9 @@ function AppContent() {
           </div>
 
           {/* Main grid */}
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 60px', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+          <div className={isFreshersWeekendEdition ? 'fds-main-grid' : undefined} style={{ maxWidth: isFreshersWeekendEdition ? 1440 : 1100, margin: '0 auto', padding: '0 24px 60px', display: isFreshersWeekendEdition ? 'grid' : 'flex', gridTemplateColumns: isFreshersWeekendEdition ? 'minmax(0, 1fr) 300px' : undefined, alignItems: 'start', gap: 24, flexWrap: 'wrap' }}>
             {/* Bets */}
-            <div style={{ flex: 1, minWidth: 'min(100%, 600px)' }}>
+            <div className={isFreshersWeekendEdition ? 'fds-main-column' : undefined} style={{ flex: 1, minWidth: 'min(100%, 600px)' }}>
               {isFreshersWeekendEdition ? (
                 <div className="fds-demo">
                   <div className="fds-demo-intro">
@@ -543,8 +565,17 @@ function AppContent() {
                               <p>{section.description}</p>
                             </div>
                             <div className="fds-demo-section-meta">
-                              <span className="fds-demo-section-count">{sectionBets.length} bets</span>
-                              {section.poster && <img className="fds-demo-poster" src={section.poster} alt={`Cartaz: ${section.title}`} />}
+                              <span className="fds-demo-section-count">{sectionBets.length} {sectionBets.length === 1 ? 'previsão' : 'previsões'}</span>
+                              {section.poster && (
+                                <button
+                                  type="button"
+                                  className="fds-demo-poster-button"
+                                  aria-label={`Ampliar cartaz: ${section.title}`}
+                                  onClick={() => setExpandedPoster(section)}
+                                >
+                                  <img className="fds-demo-poster" src={section.poster} alt="" />
+                                </button>
+                              )}
                             </div>
                           </div>
                           <div className="fds-demo-bets">
@@ -556,6 +587,7 @@ function AppContent() {
                                   bet={{ ...bet, closesIn: bet.closes_in_label || bet.closesIn }}
                                   onOptionClick={handleOptionClick}
                                   selectedOptionLabel={selectedItem ? selectedItem.option.label : null}
+                                  variant="fds"
                                 />
                               );
                             })}
@@ -613,14 +645,17 @@ function AppContent() {
             </div>
 
             {/* Sidebar */}
-            <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {isFreshersWeekendDemo ? (
-                <div className="fds-demo-sidebar">
-                  <span className="fds-demo-kicker">CONCEITO DE NAVEGAÇÃO</span>
-                  <strong>Quatro momentos.<br />Um fim de semana.</strong>
-                  <p>As cores ajudam a reconhecer cada ambiente; odds e cartões mantêm a mesma leitura em todas as secções.</p>
-                  <div><span className="fds-demo-pulse" /> Preview interativo</div>
-                </div>
+            <div className={isFreshersWeekendEdition ? 'fds-sidebar-column' : undefined} style={{ width: isFreshersWeekendEdition ? undefined : 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {isFreshersWeekendEdition ? (
+                <FdsSidebar
+                  user={user}
+                  balance={balance}
+                  myBets={myBets}
+                  canClaim={canClaim}
+                  onClaim={handleClaim}
+                  onViewLeaderboard={() => setActiveTab('leaderboard')}
+                  isDemo={isFreshersWeekendDemo}
+                />
               ) : <>
               {/* Wallet */}
               <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -690,6 +725,41 @@ function AppContent() {
       )}
 
       <Footer />
+      {expandedPoster && (
+        <div
+          className="fds-poster-lightbox"
+          role="presentation"
+          tabIndex={-1}
+          onKeyDown={event => {
+            if (event.key === 'Escape') setExpandedPoster(null);
+          }}
+          onClick={() => setExpandedPoster(null)}
+        >
+          <div
+            className="fds-poster-lightbox-content"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Cartaz: ${expandedPoster.title}`}
+            onKeyDown={event => {
+              if (event.key === 'Escape') setExpandedPoster(null);
+            }}
+            onClick={event => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="fds-poster-lightbox-close"
+              aria-label="Fechar cartaz ampliado"
+              autoFocus
+              onKeyDown={event => {
+                if (event.key === 'Escape') setExpandedPoster(null);
+              }}
+              onClick={() => setExpandedPoster(null)}
+            >×</button>
+            <img src={expandedPoster.poster} alt={`Cartaz: ${expandedPoster.title}`} />
+            <p>{expandedPoster.title}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

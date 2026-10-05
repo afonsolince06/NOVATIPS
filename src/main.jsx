@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './fds-reference.css'
 import App from './App.jsx'
 
 // Register Service Worker for Push Notifications

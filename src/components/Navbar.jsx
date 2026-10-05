@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/useAuth';
 
-export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin, notifSubscribed, notifLoading, notifSupported, onNotifToggle, hideLogin = false }) {
+export default function Navbar({ onLoginClick, onProfileClick, balance, activeTab, setActiveTab, isAdmin, notifSubscribed, notifLoading, notifSupported, onNotifToggle, hideLogin = false, fdsMode = false }) {
   const { user } = useAuth();
   const initial = user?.email?.[0]?.toUpperCase() ?? '?';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,7 +17,7 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
   const tabLabels = { bets: 'Bets', leaderboard: 'Leaderboard', history: 'My Bets', admin: '⚙️ Admin' };
 
   return (
-    <nav style={{
+    <nav className={fdsMode ? 'fds-navbar' : undefined} style={{
       display: 'flex', flexDirection: 'column',
       padding: '14px 16px', borderBottom: '1px solid #e5e7eb',
       backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100,
@@ -39,7 +39,7 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
               NOVA <span style={{ color: '#84cc16' }}>TIPS</span>
             </div>
             <div style={{ fontSize: 9, color: '#64748b', letterSpacing: 1.2, textTransform: 'uppercase', fontWeight: 600 }}>
-              Entertainment Only
+              {fdsMode ? 'FDS DO CALOIRO' : 'Entertainment Only'}
             </div>
           </div>
         </div>
@@ -50,7 +50,9 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
             {tabs.map(tab => (
               <button
                 key={tab}
+                className={`nav-tab${activeTab === tab ? ' is-active' : ''}`}
                 onClick={() => setActiveTab(tab)}
+                aria-current={activeTab === tab ? 'page' : undefined}
                 style={{
                   background: activeTab === tab ? '#ecfccb' : 'transparent',
                   border: 'none', color: activeTab === tab ? '#65a30d' : '#64748b',
@@ -65,7 +67,7 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
         {/* Right Side (Wallet & Hamburger) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {user && (
-            <div 
+            <div className={fdsMode ? 'fds-wallet-chip' : undefined}
               onClick={onProfileClick}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -135,6 +137,9 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
           {/* Hamburger Icon */}
           {isMobile && (
             <button 
+              className="nav-menu-toggle"
+              aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               style={{ 
                 background: 'transparent', border: 'none', cursor: 'pointer', 
@@ -158,7 +163,9 @@ export default function Navbar({ onLoginClick, onProfileClick, balance, activeTa
           {tabs.map(tab => (
             <button
               key={tab}
+              className={`nav-tab${activeTab === tab ? ' is-active' : ''}`}
               onClick={() => { setActiveTab(tab); setIsMenuOpen(false); }}
+              aria-current={activeTab === tab ? 'page' : undefined}
               style={{
                 background: activeTab === tab ? '#ecfccb' : '#f8fafc',
                 border: '1px solid', borderColor: activeTab === tab ? '#d9f99d' : '#e2e8f0',
