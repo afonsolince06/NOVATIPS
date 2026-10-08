@@ -10,6 +10,7 @@ import MyBets from './components/MyBets';
 
 import Leaderboard from './components/Leaderboard';
 import Missions from './components/Missions';
+import WrappedExperience from './components/Wrapped';
 import FdsGuide,{Onboarding,ContextHelp} from './components/FdsGuide';
 import useFdsExperience from './hooks/useFdsExperience';
 import FdsSidebar from './components/FdsSidebar';
@@ -488,6 +489,7 @@ function AppContent() {
         onNotifToggle={notifToggle}
       />
 
+      {isFreshersWeekendEdition && <WrappedExperience key={user?.id||'guest'} user={user} onNavigate={setActiveTab} showEntry={activeTab==='bets'} />}
       {activeTab==='guide'&&isFreshersWeekendEdition&&<FdsGuide name={username||user?.email?.split('@')[0]} houseNumber={experience?.house_number} onReplay={()=>user?setReplayUserId(user.id):setShowLogin(true)} onNavigate={tab=>{setIsProfileOpen(false);setActiveTab(tab);}}/>}
       {/* ── BETS TAB ── */}
       {activeTab === 'bets' && (

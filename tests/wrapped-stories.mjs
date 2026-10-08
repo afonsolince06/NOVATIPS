@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {buildWrappedStories} from '../src/lib/wrappedStories.js';
+import {fromLisbonInput,toLisbonInput} from '../src/lib/wrappedTime.js';
+const empty={global:{prediction_count:0,participant_count:0,settled_count:0,houses:[]},personal:{name:'Participante',prediction_count:0,settled:0,balance:null}};
+const day=buildWrappedStories({...empty,kind:'day1'});
+assert.deepEqual(day.map(s=>s.id),['opening','transition','ending']);
+assert.match(day.at(-1).title,/ÚLTIMA NOITE/);
+const final=buildWrappedStories({...empty,kind:'final',editorial_copy:{opening:'A NOSSA HISTÓRIA'},global:{...empty.global,winners:[{name:'Gui',tips:5000},{name:'João',tips:5000}]}});
+assert.equal(final[0].eyebrow,'A NOSSA HISTÓRIA');assert.equal(final.find(s=>s.id==='winner').eyebrow,'CAMPEÕES NOVA TIPS');assert.match(final.at(-1).title,/ATÉ PARA O ANO/);
+assert.equal(final.some(s=>s.id==='personal_accuracy'),false);
+assert.equal(fromLisbonInput('2026-10-10T14:00'),'2026-10-10T13:00:00.000Z');
+assert.equal(toLisbonInput('2026-10-11T13:00:00Z'),'2026-10-11T14:00');
+const rich={global:{prediction_count:486,participant_count:127,popular:{title:'Teste',participants:92},upset:{title:'Teste',chose:'Sim',answer:'Não',percent:82,participants:32},settled_count:70,correct_count:44,oracle:[{name:'Gui',wins:9,settled:10}],mission_participations:42,mission_proofs:27,mission_tips:8500,mission_popular:{title:'Story',participants:18},mega_boost:{title:'Boost',participants:20},houses:[{number:4,rank:1,score:4280,mode:'average'}],winners:[{name:'Gui',tips:9840}]},personal:{name:'Gui',prediction_count:12,correct:8,settled:12,accuracy:67,balance:5840,start_balance:3500,rank:8,rank_total:127,house:{number:4,rank:1},personality:'O Estratégico'}};
+for(const [kind,max] of [['day1',11],['final',14]]){const stories=buildWrappedStories({...rich,kind});assert.ok(stories.length<=max);assert.equal(stories[0].id,'opening');assert.equal(stories.at(-1).id,'ending');if(kind==='final')assert.ok(stories.some(s=>s.id==='share'));}console.log('PASS: stories use eligible data, distinguish Saturday/Final and honour Lisbon release time.');

@@ -1,0 +1,5 @@
+﻿const zone='Europe/Lisbon';
+const formatter=new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function parts(date){return Object.fromEntries(formatter.formatToParts(date).filter(p=>p.type!=='literal').map(p=>[p.type,Number(p.value)]));}
+export function toLisbonInput(value){if(!value)return '';const p=parts(new Date(value));const pad=n=>String(n).padStart(2,'0');return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;}
+export function fromLisbonInput(value){const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value||'');if(!m)throw Error('Escolhe uma data e hora válidas.');const [year,month,day,hour,minute]=m.slice(1).map(Number);const desired=Date.UTC(year,month-1,day,hour,minute);let stamp=desired;for(let i=0;i<3;i++){const p=parts(new Date(stamp));const local=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute);stamp+=desired-local;}if(toLisbonInput(stamp)!==value)throw Error('Esta hora não existe em Lisboa devido à mudança de horário.');return new Date(stamp).toISOString();}

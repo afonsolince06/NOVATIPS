@@ -211,3 +211,30 @@ Depois de ativar, testar com conta Admin e conta normal: importar com revisão, 
 ## Participação nas Missões (migração 013)
 
 Depois da migração 012, executa `migrations/20261008000100_mission_self_participation.sql` no **Supabase FDS** antes de publicar a interface. Usa a tabela existente `fds_mission_participations`: o participante inscreve-se uma vez, a equipa assinala a prova recebida no Instagram e confirma o vencedor antes de creditar TIPS. A validação e o crédito usam a transação e os limites de vagas já existentes. A inscrição por si só não dá TIPS nem define a ordem dos vencedores. O Admin vê o número de participantes, provas e premiados e pode pesquisar/filtrar a lista privada. A V1 não inclui cancelamento pelo participante; a participação fica no histórico da missão.
+
+## Arquivo e limpeza das Missões (migração 014)
+
+Aplica `migrations/20261008000200_mission_lifecycle.sql` no Supabase FDS após 013 e antes da publicação. A vista Admin “Todas” mostra apenas missões operacionais; prazo terminado continua visível enquanto não for concluída. “Concluir” pede confirmação, avisa se houver provas/prémios pendentes e move para “Terminadas” sem alterar participações, TIPS ou auditoria. “Apagar” só remove missões sem participantes e sem recompensas; nos outros casos oferece arquivo. O bloqueio é verificado na base, não apenas no botão.
+
+## FDS Wrapped (2026)
+
+Apply these **only to the FDS Supabase project**, in order, after all earlier FDS migrations:
+
+1. `20261008000200_mission_lifecycle.sql` (if not already applied).
+2. `20261008000300_fds_wrapped.sql` — settings, settlement timestamp, balance journal, frozen snapshots and authenticated RPCs. It does not alter the bet or mission payment functions.
+3. `20261008000400_fds_wrapped_scheduler.sql` — enables Supabase `pg_cron` and creates the minute-level release job. If the extension is already installed, the existing extension is reused.
+
+The release defaults confirmed for 2026 are Saturday 10 October at 14:00 and Sunday 11 October at 14:00, **Europe/Lisbon**. The official FDS start is Friday 9 October at 15:00 (Europe/Lisbon). All three times are prefilled; both releases are initially disabled. In Admin → Wrapped, preview, then enable each release and save. Do this before Saturday at 14:00. The editor always interprets and displays times in Lisbon, regardless of the Admin device's timezone. The Day 1 snapshot uses the exact configured cutoff. The Final waits while published predictions or missions remain open, then snapshots at the actual publication time after they are resolved.
+
+The balance journal starts when migration 003 is applied. Earlier balance changes cannot be reconstructed; a missing starting balance is omitted from the corresponding story. Apply the migration before the event start for complete balance evolution. Previously settled bets are stamped at migration time; this is safe only when the migration is applied before the Wrapped release. Run neither migration retroactively and assume it recreated an exact historical 14:00 snapshot.
+
+After saving the settings, verify scheduler installation in Supabase SQL Editor:
+
+```sql
+SELECT jobname,schedule,active FROM cron.job WHERE jobname='fds-wrapped-publish-minute';
+SELECT kind,release_at,period_start,enabled FROM public.fds_wrapped_settings ORDER BY kind;
+```
+
+When the NOVA TIPS track is ready, place an MP3 at `public/fds/wrapped-theme.mp3`. The Wrapped detects it and starts it on opening when the browser permits audio; the sound control remains visible. No music file is required for the snapshots or story interface to work.
+
+For a new edition, update dates in Admin before enabling. Published snapshots cannot be edited through the Admin UI. The app requests only the signed-in user's personal payload; raw snapshot tables have RLS and no direct authenticated grants.

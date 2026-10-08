@@ -6,6 +6,7 @@ import {supabase} from '../lib/supabase';
 import {isPredictionPublic} from '../lib/scheduling';
 import AdminTips from './AdminTips';
 import HousesAdmin from './HousesAdmin';
+import WrappedAdmin from './WrappedAdmin';
 import PredictionManagement from './PredictionManagement';
 
 export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDeleteBet, onResetPassword, onMegaBoostSaved, onMissionReward, enableSections = false, sections = [] }) {
@@ -72,7 +73,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
 
   return (
     <div className="admin-control-center">
-<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],...(enableSections?[['manage','▣ Previsões']]:[]),['resolve','✓ Resolver previsões'],...(enableSections ? [['missions','🔥 Missões'],['tips','💰 Gestão de TIPS'],['houses','🏠 Casas']] : []),...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>{if(id==='create')setEditId('');setPanel(id);}}>{label}</button>)}</nav><div className="admin-workspace">
+<nav className="admin-editor-nav" aria-label="Admin"><strong>ADMIN FDS</strong>{[['create','+ Criar previsão'],...(enableSections?[['manage','▣ Previsões']]:[]),['resolve','✓ Resolver previsões'],...(enableSections ? [['missions','🔥 Missões'],['tips','💰 Gestão de TIPS'],['houses','🏠 Casas'],['wrapped','💜 Wrapped']] : []),...(onResetPassword?[['access','♙ Acessos']]:[])].map(([id,label])=><button key={id} className={panel===id?'active':''} onClick={()=>{if(id==='create')setEditId('');setPanel(id);}}>{label}</button>)}</nav><div className="admin-workspace">
 
       {panel === 'create' && <PredictionEditor key={editId||'new'} schedulingEnabled={Boolean(capabilities?.scheduled_predictions)} initialBet={managedBets.find(b=>b.id===editId)} bets={editorBets} sections={sections} fdsMode={enableSections} onAddBet={onAddBet} onSaved={saved} />}
 
@@ -82,6 +83,7 @@ export default function AdminPanel({ openBets = [], onAddBet, onResolveBet, onDe
       {panel === 'tips' && (capabilities?.admin_tips_grants?<AdminTips onBalanceRefresh={onMissionReward}/>:<section className="editor-panel"><h1>💰 Gestão de TIPS</h1><p>{capabilities===null?'A verificar configuração…':'Executa as migrações 010 e 011 no Supabase FDS e atualiza esta página para ativar atribuições manuais de TIPS.'}</p></section>)}
       {panel === 'houses' && (capabilities?.houses?<HousesAdmin/>:<section className="editor-panel"><h1>🏠 Casas FDS</h1><p>Executa a migração 012 no Supabase FDS e atualiza a página para ativar casas e onboarding.</p></section>)}
       {panel === 'missions' && <MissionsAdmin onBalanceRefresh={onMissionReward} />}
+      {panel === 'wrapped' && <WrappedAdmin />}
 
       {/* ── RESOLVE BETS ── */}
       {panel === 'resolve' && (
