@@ -722,7 +722,7 @@ function AppContent() {
       {/* ── LEADERBOARD TAB ── */}
       {activeTab === 'leaderboard' && (
         <div className="admin-page" style={{ maxWidth: 1440, margin: '0 auto', padding: '24px 24px 60px' }}>
-          <Leaderboard user={user} experience={experience} onSeen={markExperience} />
+          <Leaderboard user={user} experience={experience} onSeen={markExperience} onLogin={() => setShowLogin(true)} />
         </div>
       )}
 
