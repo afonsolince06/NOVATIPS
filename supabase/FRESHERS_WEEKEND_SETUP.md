@@ -235,6 +235,6 @@ SELECT jobname,schedule,active FROM cron.job WHERE jobname='fds-wrapped-publish-
 SELECT kind,release_at,period_start,enabled FROM public.fds_wrapped_settings ORDER BY kind;
 ```
 
-When the NOVA TIPS track is ready, place an MP3 at `public/fds/wrapped-theme.mp3`. The Wrapped detects it and starts it on opening when the browser permits audio; the sound control remains visible. No music file is required for the snapshots or story interface to work.
+The NOVA TIPS track is bundled at `public/fds/wrapped-theme.mp3`. Admin preview and the published stories use the same audio. It starts when the browser permits playback; tapping a story or the sound control starts it after browsers that require a user gesture. The sound control also mutes it.
 
 For a new edition, update dates in Admin before enabling. Published snapshots cannot be edited through the Admin UI. The app requests only the signed-in user's personal payload; raw snapshot tables have RLS and no direct authenticated grants.

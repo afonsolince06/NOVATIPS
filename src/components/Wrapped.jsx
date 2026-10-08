@@ -3,38 +3,24 @@ import {supabase} from '../lib/supabase';
 import {buildWrappedStories} from '../lib/wrappedStories';
 import '../wrapped.css';
 const fmt=n=>Number(n||0).toLocaleString('pt-PT');
-async function shareCard(payload){
- const p=payload.personal||{},canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1920;
- const c=canvas.getContext('2d'),bg=c.createLinearGradient(0,0,1080,1920);bg.addColorStop(0,'#120425');bg.addColorStop(.52,'#230542');bg.addColorStop(1,'#070611');c.fillStyle=bg;c.fillRect(0,0,1080,1920);
- c.strokeStyle='#b716e9';c.lineWidth=10;c.beginPath();c.arc(850,320,330,0,Math.PI*2);c.stroke();c.strokeStyle='#9bff36';c.beginPath();c.arc(140,1640,410,0,Math.PI*2);c.stroke();
- const line=(value,y,size,color='#fff')=>{c.fillStyle=color;c.font=`900 ${size}px system-ui`;c.textAlign='center';c.fillText(String(value),540,y,920);};
- line('NOVA TIPS',175,70,'#9bff36');line(payload.kind==='final'?'FDS WRAPPED · FINAL':'FDS WRAPPED · DIA 1',300,56);
- line(p.name||'Participante',510,88);let y=700;
- const stats=[[p.prediction_count!=null?fmt(p.prediction_count):null,'PREVISÕES'],[p.accuracy!=null?fmt(p.accuracy)+'%':null,'ACERTO'],[p.balance!=null?fmt(p.balance):null,'TIPS'],[p.rank!=null?'#'+p.rank:null,'GLOBAL'],[p.house?.number?'CASA '+p.house.number:null,'BATALHA DAS CASAS'],[p.missions_completed?fmt(p.missions_completed):null,'MISSÕES COMPLETADAS']].filter(([value])=>value!=null);
- for(const [value,label] of stats){line(value,y,88,'#9bff36');line(label,y+55,30);y+=190;}
- line('FDS DO CALOIRO',1760,48);line('💜',1840,62);
- const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
- if(!blob)throw Error('Não foi possível criar a imagem.');
- const file=new File([blob],'fds-wrapped.png',{type:'image/png'});
- if(window.matchMedia('(pointer: coarse)').matches && navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'O meu FDS Wrapped'});return;}catch(e){if(e.name==='AbortError')return;}}
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='fds-wrapped.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
-}
 export function WrappedViewer({payload,onClose,onNavigate}){
- const slides=buildWrappedStories(payload),[index,setIndex]=useState(0),[sound,setSound]=useState(false),[audioAvailable,setAudioAvailable]=useState(false),[shareError,setShareError]=useState('');
- const audio=useRef(null),touchX=useRef(null),current=slides[Math.min(index,slides.length-1)];
+ const slides=buildWrappedStories(payload),[index,setIndex]=useState(0),[sound,setSound]=useState(false),[audioAvailable,setAudioAvailable]=useState(false);
+ const audio=useRef(null),touchX=useRef(null),manualSoundChoice=useRef(false),current=slides[Math.min(index,slides.length-1)];
  useEffect(()=>{let active=true;fetch('/fds/wrapped-theme.mp3',{method:'HEAD'}).then(r=>{if(active&&r.ok&&/audio|mpeg|octet-stream/.test(r.headers.get('content-type')||'')){setAudioAvailable(true);setSound(true);}}).catch(()=>{});return()=>{active=false;};},[]);
  useEffect(()=>{const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=old;};},[]);
  useEffect(()=>{const key=e=>{if(e.key==='Escape')onClose();if(e.key==='ArrowRight')setIndex(i=>Math.min(slides.length-1,i+1));if(e.key==='ArrowLeft')setIndex(i=>Math.max(0,i-1));};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[onClose,slides.length]);
  useEffect(()=>{if(!audio.current)return;if(sound){audio.current.volume=.35;audio.current.play().catch(()=>setSound(false));}else audio.current.pause();},[sound]);
- const next=()=>{if(index>=slides.length-1){onClose(true);return;}setIndex(i=>Math.min(slides.length-1,i+1));};
+ const startMusic=()=>{if(audioAvailable&&!manualSoundChoice.current&&audio.current?.paused){audio.current.volume=.35;audio.current.play().then(()=>setSound(true)).catch(()=>{});}};
+ const toggleSound=()=>{manualSoundChoice.current=true;if(sound){audio.current?.pause();setSound(false);}else audio.current?.play().then(()=>setSound(true)).catch(()=>setSound(false));};
+ const next=()=>{startMusic();if(index>=slides.length-1){onClose(true);return;}setIndex(i=>Math.min(slides.length-1,i+1));};
  if(!current)return <div className="wrapped-overlay" role="dialog" aria-modal="true" aria-label="FDS Wrapped"><button className="wrapped-main-action" onClick={()=>onClose()}>Fechar Wrapped</button></div>;
  return <div className="wrapped-overlay" role="dialog" aria-modal="true" aria-label={payload.preview?'Prévia do FDS Wrapped':'FDS Wrapped'}>
- <div className={'wrapped-canvas wrapped-'+current.type} style={{'--wrapped-photo':`url("${current.photo}")`}} onTouchStart={e=>{touchX.current=e.touches[0].clientX;}} onTouchEnd={e=>{if(touchX.current==null)return;const d=e.changedTouches[0].clientX-touchX.current;if(Math.abs(d)>45)setIndex(i=>Math.max(0,Math.min(slides.length-1,i+(d<0?1:-1))));touchX.current=null;}} onClick={e=>{if(e.target.closest('button,a'))return;const x=e.clientX-e.currentTarget.getBoundingClientRect().left;setIndex(i=>Math.max(0,Math.min(slides.length-1,i+(x<e.currentTarget.clientWidth*.3?-1:1))));}}>
+ <div className={'wrapped-canvas wrapped-'+current.type} style={{'--wrapped-photo':`url("${current.photo}")`}} onTouchStart={e=>{touchX.current=e.touches[0].clientX;}} onTouchEnd={e=>{if(touchX.current==null)return;const d=e.changedTouches[0].clientX-touchX.current;if(Math.abs(d)>45)setIndex(i=>Math.max(0,Math.min(slides.length-1,i+(d<0?1:-1))));touchX.current=null;}} onClick={e=>{if(e.target.closest('button,a'))return;startMusic();const x=e.clientX-e.currentTarget.getBoundingClientRect().left;setIndex(i=>Math.max(0,Math.min(slides.length-1,i+(x<e.currentTarget.clientWidth*.3?-1:1))));}}>
  <div className="wrapped-progress" aria-label={`História ${index+1} de ${slides.length}`}>{slides.map((s,i)=><span key={s.id} className={i<=index?'filled':''}/>)}</div>
- <div className="wrapped-top"><strong>NOVA <em>TIPS</em></strong>{payload.preview&&<b className="wrapped-preview-tag">PRÉVIA · dados provisórios</b>}<div><button onClick={()=>setSound(v=>!v)} disabled={!audioAvailable} title={audioAvailable?'Ligar ou desligar música':'Música ainda indisponível'}>{sound?'♫':'♪'}</button><button onClick={()=>onClose()} aria-label="Fechar Wrapped">×</button></div></div>
- <div className="wrapped-story" key={current.id}><p className="wrapped-eyebrow">{current.eyebrow}</p>{current.type==='podium'?<div className="wrapped-podium">{current.houses.map((h,i)=><div key={h.number}><b>#{h.rank} CASA {h.number}</b><strong>{fmt(h.score)}</strong><small>{i===0?'👑 ':''}{current.body}</small></div>)}</div>:<>{current.title&&<h2>{current.title}</h2>}{current.number&&<strong className="wrapped-huge">{current.number}</strong>}{current.unit&&<h3>{current.unit}</h3>}{current.body&&<p className="wrapped-body">{current.body}</p>}</>}</div>
- <div className="wrapped-bottom">{current.type==='share'&&<button className="wrapped-main-action" onClick={async()=>{try{setShareError('');await shareCard(payload);}catch(e){setShareError(e.message);}}}>↗ Partilhar o meu Wrapped</button>}{shareError&&<small role="alert">{shareError}</small>}{current.type==='ending'?<button className="wrapped-main-action" onClick={()=>{onClose(true);onNavigate?.(payload.kind==='day1'?'bets':'leaderboard');}}>{payload.kind==='day1'?'VER APOSTAS →':'VER CLASSIFICAÇÃO →'}</button>:<button className="wrapped-continue" onClick={e=>{e.stopPropagation();next();}}>TOCA PARA CONTINUAR →</button>}</div>
- </div>{audioAvailable&&<audio ref={audio} src="/fds/wrapped-theme.mp3" loop preload="none"/>}</div>;
+ <div className="wrapped-top"><strong>NOVA <em>TIPS</em></strong>{payload.preview&&<b className="wrapped-preview-tag">PRÉVIA · dados provisórios</b>}<div><button onClick={toggleSound} disabled={!audioAvailable} title={audioAvailable?'Ligar ou desligar música':'Música ainda indisponível'}>{sound?'♫':'♪'}</button><button onClick={()=>onClose()} aria-label="Fechar Wrapped">×</button></div></div>
+ <div className="wrapped-story" key={current.id}><p className="wrapped-eyebrow">{current.eyebrow}</p>{current.type==='podium'?<div className="wrapped-house-list">{current.houses.map(h=><div key={h.number}><b>#{h.rank} CASA {h.number}</b><strong>{fmt(h.score)}</strong><small>{h.rank===1?'👑 ':''}{current.body}</small></div>)}</div>:<>{current.title&&<h2>{current.title}</h2>}{current.number&&<strong className="wrapped-huge">{current.number}</strong>}{current.unit&&<h3>{current.unit}</h3>}{current.body&&<p className="wrapped-body">{current.body}</p>}</>}</div>
+ <div className="wrapped-bottom">{current.type==='ending'?<button className="wrapped-main-action" onClick={()=>{onClose(true);onNavigate?.(payload.kind==='day1'?'bets':'leaderboard');}}>{payload.kind==='day1'?'VER APOSTAS →':'VER CLASSIFICAÇÃO →'}</button>:<button className="wrapped-continue" onClick={e=>{e.stopPropagation();next();}}>TOCA PARA CONTINUAR →</button>}</div>
+ </div>{audioAvailable&&<audio ref={audio} src="/fds/wrapped-theme.mp3" loop preload="auto"/>}</div>;
 }
 export default function WrappedExperience({user,onNavigate,showEntry=true}){
  const [available,setAvailable]=useState([]),[loadedFor,setLoadedFor]=useState(null),[payload,setPayload]=useState(null),[announce,setAnnounce]=useState(null),[error,setError]=useState('');
